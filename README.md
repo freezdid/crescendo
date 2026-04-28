@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎹 Crescendo IA Vision
 
-## Getting Started
+![Crescendo IA Banner](https://img.shields.io/badge/AI-Neural_Network-blue?style=for-the-badge&logo=brain)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-WebGPU-orange?style=for-the-badge&logo=tensorflow)
+![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite)
 
-First, run the development server:
+> Une application de prédiction neuronale avancée pour le jeu Crescendo, propulsée par l'intelligence artificielle et l'accélération matérielle WebGPU.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🌟 Caractéristiques
+
+- 🧠 **Modèle LSTM Bidirectionnel** : Analyse les séquences temporelles des tirages avec un mécanisme d'attention pour identifier les patterns subtils.
+- ⚡ **Accélération WebGPU** : Entraînement et prédictions ultra-rapides directement dans votre navigateur grâce à la puissance de votre carte graphique.
+- 📊 **Analyse Statistique Complète** : Calcul des fréquences, de la typicalité (somme, parité) et des écarts (dernière apparition).
+- 🔄 **Scraping Automatisé** : Récupération en temps réel des derniers résultats officiels.
+- 📱 **Interface Glassmorphism** : Un dashboard moderne, réactif et intuitif conçu pour une expérience utilisateur premium.
+- 📓 **Journal de Performance** : Suivi historique de la précision des prédictions de l'IA par rapport aux tirages réels.
+
+---
+
+## 🚀 Installation Rapide
+
+### Prérequis
+- [Node.js](https://nodejs.org/) (v18 ou supérieur)
+- Une carte graphique compatible (pour WebGPU, sinon repli automatique sur WebGL)
+
+### Étapes
+1. **Cloner le projet**
+   ```bash
+   git clone https://github.com/freezdid/crescendo.git
+   cd crescendo
+   ```
+
+2. **Installer les dépendances**
+   ```bash
+   npm install
+   ```
+
+3. **Lancer l'application**
+   ```bash
+   npm run dev
+   ```
+   Rendez-vous sur [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🛠️ Stack Technique
+
+- **Frontend** : Next.js 15 (App Router), Tailwind CSS, Framer Motion (Animations).
+- **Intelligence Artificielle** : TensorFlow.js avec backend WebGPU/WebGL.
+- **Base de Données** : SQLite (local) & IndexedDB (navigateur) pour une persistance maximale.
+- **Scraping** : Cheerio & API Routes Next.js.
+- **Design** : Inspiré par `ui-ux-pro-max-skill`.
+
+---
+
+## 📈 Fonctionnement de l'IA
+
+L'IA utilise une architecture **Deep Learning** spécifique :
+1. **Prétraitement** : Les données brutes sont normalisées via un `StandardScaler` et enrichies de 36 caractéristiques techniques (fréquences, rolling stats, parité).
+2. **Fenêtrage** : Elle analyse les 12 derniers tirages (fenêtre glissante) pour prédire le suivant.
+3. **Architecture** : Deux couches LSTM bidirectionnelles suivies d'une couche d'attention pour pondérer l'importance de chaque tirage historique.
+4. **Optimisation** : Utilisation de l'algorithme Adam avec une perte MAE (Mean Absolute Error) pour une précision optimale sur les numéros.
+
+---
+
+## 📁 Structure du Projet
+
+```text
+src/
+├── app/              # Routes et Pages (Next.js)
+│   ├── api/          # Endpoints (Scraping, Sync, DB)
+│   ├── history/      # Archives des tirages
+│   └── journal/      # Suivi des performances IA
+├── lib/              # Logique métier
+│   ├── model.ts      # Moteur IA (TensorFlow.js)
+│   ├── db.ts         # Gestion SQLite
+│   ├── stats.ts      # Calculs statistiques
+│   └── storage.ts    # Persistance navigateur
+└── components/       # Composants UI
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📝 Licence
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Distribué sous licence MIT. Voir `LICENSE` pour plus d'informations.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Avertissement** : *Cette application est un outil d'analyse statistique basé sur des probabilités. Le jeu comporte des risques : endettement, isolement, dépendance. Pour être aidé, appelez le 09 74 75 13 13 (appel non surtaxé).*
