@@ -150,11 +150,11 @@ export default function Home() {
     lastTwelveRef.current = lastTwelve;
   };
 
-  const handleScrape = async () => {
+  const handleScrape = async (deep: boolean = false) => {
     setIsScraping(true);
-    setScrapeStatus("Vérification nouveaux tirages...");
+    setScrapeStatus(deep ? "Récupération historique complet (2025-2026)..." : "Vérification nouveaux tirages...");
     try {
-      const res = await fetch('/api/crescendo');
+      const res = await fetch(`/api/crescendo${deep ? '?deep=true' : ''}`);
       const json = await res.json();
         if (json.success && json.results.length > 0) {
           const processed = processData(json.results);
@@ -171,7 +171,7 @@ export default function Home() {
             tfModel.current = buildAdvancedModel(windowLength, 36, 11);
             setModelReady(true);
           }
-          setScrapeStatus(isNewData ? "Nouveaux tirages détectés !" : "Données à jour");
+          setScrapeStatus(deep ? `Historique chargé (${json.pagesScraped} pages)` : (isNewData ? "Nouveaux tirages détectés !" : "Données à jour"));
 
           // Push to Cloud
           try {
@@ -182,8 +182,8 @@ export default function Home() {
             setSyncStatus("Cloud Updated");
           } catch (e) { console.error("Cloud push failed:", e); }
 
-          // AUTO-TRAIN if new data
-          if (isNewData && data.length > 0) {
+          // AUTO-TRAIN if new data and not deep (deep is usually manual)
+          if (isNewData && data.length > 0 && !deep) {
             console.log("Auto-training starting due to new data...");
             handleTrain();
           }
@@ -194,7 +194,7 @@ export default function Home() {
       setScrapeStatus("Erreur mise à jour");
     }
     setIsScraping(false);
-    setTimeout(() => setScrapeStatus(""), 3000);
+    setTimeout(() => setScrapeStatus(""), 4000);
   };
 
   const handleTrain = async () => {
@@ -516,6 +516,14 @@ export default function Home() {
               >
                 <RefreshCw className={`w-5 h-5 ${isSyncingModel ? 'animate-spin' : ''}`} />
                 <span>Sync IA</span>
+            </button>
+            <button 
+                onClick={() => handleScrape(true)} 
+                disabled={isScraping}
+                className="btn-ghost text-primary"
+              >
+                <Database className={`w-5 h-5 ${isScraping ? 'animate-pulse' : ''}`} />
+                <span>Full Scraping 2025</span>
             </button>
             <button onClick={handleTrain} disabled={data.length === 0 || isTraining} className="btn-primary">
               {isTraining ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
