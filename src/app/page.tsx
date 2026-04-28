@@ -26,6 +26,8 @@ const getNumFromLetter = (char: string) => {
   const idx = SAMEDI_LETTERS.indexOf(char.toUpperCase());
   return idx === -1 ? 1 : idx + 1;
 };
+
+export default function Home() {
   const [data, setData] = useState<ProcessedDraw[]>([]);
   const [isScraping, setIsScraping] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
