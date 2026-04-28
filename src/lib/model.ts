@@ -160,6 +160,7 @@ export class StandardScaler {
   stds: number[] = [];
 
   fit(data: number[][]) {
+    if (!data || data.length === 0 || !data[0]) return;
     const rows = data.length;
     const cols = data[0].length;
     for (let j = 0; j < cols; j++) {

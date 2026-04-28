@@ -2,19 +2,25 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { LotoDraw } from './model';
 
-const dbPath = path.resolve(process.cwd(), 'crescendo.db');
+const isVercel = process.env.VERCEL === '1';
+const dbPath = isVercel 
+  ? path.join('/tmp', 'crescendo.db')
+  : path.resolve(process.cwd(), 'crescendo.db');
+
 console.log("DB Path:", dbPath);
 let db: any;
 
 try {
-  db = new Database(dbPath);
+  // better-sqlite3 is a native dependency, it might fail to load in some environments
+  const BetterSqlite3 = require('better-sqlite3');
+  db = new BetterSqlite3(dbPath);
 } catch (e) {
-  console.error("Failed to initialize SQLite, falling back to mock storage:", e);
-  // Mock db object to avoid crashes
+  console.error("Failed to initialize SQLite:", e);
+  // Mock db object to avoid crashes and allow the app to run without persistence
   db = {
     exec: () => {},
     prepare: () => ({ 
-      run: () => {}, 
+      run: () => ({ changes: 0 }), 
       all: () => [], 
       get: () => null 
     }),
