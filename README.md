@@ -14,7 +14,8 @@
 - 🧠 **Modèle LSTM Bidirectionnel** : Analyse les séquences temporelles des tirages avec un mécanisme d'attention pour identifier les patterns subtils.
 - ⚡ **Accélération WebGPU** : Entraînement et prédictions ultra-rapides directement dans votre navigateur grâce à la puissance de votre carte graphique.
 - 📊 **Analyse Statistique Complète** : Calcul des fréquences, de la typicalité (somme, parité) et des écarts (dernière apparition).
-- 🔄 **Scraping Automatisé** : Récupération en temps réel des derniers résultats officiels.
+- 🔄 **Scraping Profond (2025-2026)** : Récupération récursive de tout l'historique depuis le lancement (Nov 2025).
+- 🔠 **Set de Lettres SAMEDI** : Support exclusif des lettres officielles du jeu (S, A, M, E, D, I).
 - 📱 **Interface Glassmorphism** : Un dashboard moderne, réactif et intuitif conçu pour une expérience utilisateur premium.
 - 📓 **Journal de Performance** : Suivi historique de la précision des prédictions de l'IA par rapport aux tirages réels.
 
@@ -50,19 +51,20 @@
 
 - **Frontend** : Next.js 15 (App Router), Tailwind CSS, Framer Motion (Animations).
 - **Intelligence Artificielle** : TensorFlow.js avec backend WebGPU/WebGL.
-- **Base de Données** : SQLite (local) & IndexedDB (navigateur) pour une persistance maximale.
+- **Base de Données** : SQLite (local/Vercel tmp) & IndexedDB (navigateur).
+- **Stockage Cloud** : Vercel Blob (pour la synchronisation des modèles).
 - **Scraping** : Cheerio & API Routes Next.js.
-- **Design** : Inspiré par `ui-ux-pro-max-skill`.
 
 ---
 
-## 📈 Fonctionnement de l'IA
+## 📉 Fonctionnement de l'IA
 
 L'IA utilise une architecture **Deep Learning** spécifique :
 1. **Prétraitement** : Les données brutes sont normalisées via un `StandardScaler` et enrichies de 36 caractéristiques techniques (fréquences, rolling stats, parité).
-2. **Fenêtrage** : Elle analyse les 12 derniers tirages (fenêtre glissante) pour prédire le suivant.
+2. **Fenêtrage** : Elle analyse les 12 derniers tirages (fenêtre glissante par défaut, configurable) pour prédire le suivant.
 3. **Architecture** : Deux couches LSTM bidirectionnelles suivies d'une couche d'attention pour pondérer l'importance de chaque tirage historique.
-4. **Optimisation** : Utilisation de l'algorithme Adam avec une perte MAE (Mean Absolute Error) pour une précision optimale sur les numéros.
+4. **Optimisation** : Utilisation de l'algorithme Adam avec une perte MAE (Mean Absolute Error).
+5. **Post-processing** : Les prédictions sont castées sur l'ensemble [1-25] pour les numéros et [S, A, M, E, D, I] pour la lettre.
 
 ---
 
