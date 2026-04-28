@@ -91,7 +91,8 @@ export function processData(draws: LotoDraw[]): ProcessedDraw[] {
 
   return reversed.map((d, i) => {
     const nums = [d.num0, d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.num7, d.num8, d.num9];
-    const letterNum = d.letter ? d.letter.charCodeAt(0) - 64 : 1; // A=1
+    const letterMap: Record<string, number> = { 'S': 1, 'A': 2, 'M': 3, 'E': 4, 'D': 5, 'I': 6 };
+    const letterNum = d.letter ? (letterMap[d.letter.toUpperCase()] || 1) : 1;
     
     const updateFreq = (key: string, val: number) => {
       const compositeKey = `${key}_${val}`;

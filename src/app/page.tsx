@@ -20,7 +20,12 @@ import { calculateFrequencies, analyzeTypicality } from '../lib/stats';
 import { loadDraws, saveDraws, saveModel, loadModel, hasSavedModel, loadPredictions, savePredictions, SavedPrediction, exportModel, saveLastPrediction, loadLastPrediction } from '../lib/storage';
 import Link from 'next/link';
 
-export default function Home() {
+const SAMEDI_LETTERS = ['S', 'A', 'M', 'E', 'D', 'I'];
+const getLetterFromNum = (num: number) => SAMEDI_LETTERS[(num - 1) % 6] || 'S';
+const getNumFromLetter = (char: string) => {
+  const idx = SAMEDI_LETTERS.indexOf(char.toUpperCase());
+  return idx === -1 ? 1 : idx + 1;
+};
   const [data, setData] = useState<ProcessedDraw[]>([]);
   const [isScraping, setIsScraping] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
@@ -292,7 +297,7 @@ export default function Home() {
         if (scaledPred && scaledPred[0]) {
           let finalPred = scaledPred[0].map((val, i) => Math.round((val * stds[i]) + means[i]));
           for(let i=0; i<10; i++) finalPred[i] = Math.max(1, Math.min(25, finalPred[i]));
-          finalPred[10] = Math.max(1, Math.min(13, finalPred[10])); // A-M
+          finalPred[10] = Math.max(1, Math.min(6, finalPred[10])); // 1-6 (SAMEDI)
           
           let mainNums = Array.from(new Set(finalPred.slice(0, 10))).sort((a,b) => a-b);
           while(mainNums.length < 10) {
@@ -573,7 +578,7 @@ export default function Home() {
                       <div className="flex gap-2">
                         {pred.map((num, i) => (
                           <div key={i} className={`number-ball ${i === 10 ? 'chance' : ''}`}>
-                            {i === 10 ? String.fromCharCode(num + 64) : num}
+                            {i === 10 ? getLetterFromNum(num) : num}
                           </div>
                         ))}
                       </div>
@@ -749,11 +754,11 @@ export default function Home() {
                   type={idx === 10 ? "text" : "number"}
                   min="1" 
                   max="25"
-                  value={idx === 10 ? String.fromCharCode(simNumbers[idx] + 64) : simNumbers[idx]}
+                  value={idx === 10 ? getLetterFromNum(simNumbers[idx]) : simNumbers[idx]}
                   onChange={(e) => {
                     const next = [...simNumbers];
                     if (idx === 10) {
-                      next[idx] = e.target.value.toUpperCase().charCodeAt(0) - 64 || 1;
+                      next[idx] = getNumFromLetter(e.target.value);
                     } else {
                       next[idx] = parseInt(e.target.value) || 1;
                     }
@@ -802,7 +807,7 @@ export default function Home() {
              <div className="flex gap-4">
                 {frequencies?.topLetters.map((c, i) => (
                   <div key={i} className="w-8 h-8 rounded-full bg-loto-yellow text-slate-900 flex items-center justify-center font-black text-xs shadow-lg">
-                    {String.fromCharCode(c + 64)}
+                    {getLetterFromNum(c)}
                   </div>
                 ))}
              </div>

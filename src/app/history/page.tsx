@@ -6,6 +6,11 @@ import { ChevronLeft, Calendar, Search, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { loadDraws } from '../../lib/storage';
 
+const SAMEDI_LETTERS = ['S', 'A', 'M', 'E', 'D', 'I'];
+const getLetterFromNum = (num: number) => {
+  if (typeof num === 'string') return num;
+  return SAMEDI_LETTERS[(num - 1) % 6] || 'S';
+};
 
 interface Draw {
   date: string;

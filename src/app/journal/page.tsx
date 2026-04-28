@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { loadDraws, loadPredictions, SavedPrediction } from '@/lib/storage';
 import { ProcessedDraw } from '@/lib/model';
 
+const SAMEDI_LETTERS = ['S', 'A', 'M', 'E', 'D', 'I'];
+const getLetterFromNum = (num: number) => SAMEDI_LETTERS[(num - 1) % 6] || 'S';
+
 export default function Journal() {
   const [data, setData] = useState<ProcessedDraw[]>([]);
   const [predictions, setPredictions] = useState<SavedPrediction[]>([]);
@@ -167,7 +170,7 @@ export default function Journal() {
                                 ? 'bg-loto-red text-white border-2 border-white/20' 
                                 : 'bg-primary/10 border border-primary/30 text-primary shadow-primary/5'
                             }`}>
-                              {i === 10 ? String.fromCharCode(num + 64) : (num < 10 ? `0${num}` : num)}
+                              {i === 10 ? getLetterFromNum(num) : (num < 10 ? `0${num}` : num)}
                             </div>
                             <span className="text-[6px] font-black text-slate-600 uppercase">{i === 10 ? 'Lettre' : `N°${i+1}`}</span>
                           </div>
