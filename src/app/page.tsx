@@ -284,7 +284,7 @@ export default function Home() {
     // Phase 1 : Générer un large pool de candidats (100+)
     for (let p = 0; p < 150; p++) {
       tf.tidy(() => {
-        const noise = tf.randomNormal([1, currentWindow, 25], 0, 0.01 + (p * 0.001));
+        const noise = tf.randomNormal([1, currentWindow, 36], 0, 0.01 + (p * 0.001));
         const input = tf.add(tf.tensor3d([inputData]), noise);
         const output = tfModel.current!.predict(input) as tf.Tensor;
         const scaledPred = output.arraySync() as number[][];
@@ -716,7 +716,7 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          <div className="h-48 md:h-64 w-full min-h-[180px] min-w-full z-10 flex items-center justify-center">
+          <div className="h-48 md:h-64 w-full min-h-[250px] min-w-full z-10 flex items-center justify-center">
             {lossHistory.length > 0 ? (
               <ResponsiveContainer width="99%" height="100%" minHeight={180}>
                 <LineChart data={lossHistory}>
