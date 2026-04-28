@@ -265,6 +265,24 @@ export function buildAdvancedModel(windowLength: number, numFeatures: number, nu
   return model;
 }
 
+export function buildFastModel(windowLength: number, numFeatures: number, numLabels: number) {
+  const model = tf.sequential();
+  model.add(tf.layers.lstm({
+    units: 64,
+    inputShape: [windowLength, numFeatures],
+    kernelInitializer: 'glorotNormal'
+  }));
+  model.add(tf.layers.dense({ units: 32, activation: 'relu' }));
+  model.add(tf.layers.dense({ units: numLabels }));
+
+  model.compile({
+    loss: 'meanAbsoluteError',
+    optimizer: tf.train.adam(0.001)
+  });
+
+  return model;
+}
+
 export async function runBacktest(data: ProcessedDraw[], windowLength: number, testSize: number = 50, onProgress?: (p: number) => void) {
   if (data.length <= testSize + windowLength) return null;
   
