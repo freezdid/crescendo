@@ -120,7 +120,14 @@ export default function Journal() {
             <ChevronLeft className="w-5 h-5" />
             <span>Retour Dashboard</span>
           </Link>
-          <div className="flex items-center gap-4 order-1 md:order-2">
+          <div className="flex flex-wrap items-center gap-3 order-1 md:order-2">
+            <Link 
+              href="/"
+              className="px-4 py-2 rounded-full bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 hover:scale-105 transition-all text-xs font-bold uppercase flex items-center gap-2"
+            >
+              <Brain className="w-4 h-4" />
+              Entraîner le Modèle
+            </Link>
             <button 
               onClick={() => window.location.reload()}
               className="p-2 rounded-full bg-slate-900 border border-white/5 text-slate-400 hover:text-accent transition-colors"
@@ -128,7 +135,7 @@ export default function Journal() {
             >
               <RefreshCw className="w-5 h-5" />
             </button>
-            <div className="text-right">
+            <div className="text-right ml-2 hidden sm:block">
               <h1 className="text-2xl font-black italic tracking-tighter text-white flex items-center gap-2">
                  <Brain className="w-6 h-6 text-accent" /> CRESCENDO JOURNAL
               </h1>

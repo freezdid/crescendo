@@ -8,8 +8,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Loto IA | Deep Learning Prediction",
-  description: "Next-generation deep learning Loto prediction web application",
+  title: "Crescendo IA | Deep Learning Prediction",
+  description: "Next-generation deep learning Crescendo prediction web application",
 };
 
 export default function RootLayout({

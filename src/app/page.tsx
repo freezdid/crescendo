@@ -297,7 +297,17 @@ export default function Home() {
         const scaledPred = output.arraySync() as number[][];
         
         if (scaledPred && scaledPred[0]) {
-          let finalPred = scaledPred[0].map((val, i) => Math.round((val * stds[i]) + means[i]));
+          // Introduction d'une variance aléatoire pour éviter que le modèle ne prédise toujours la moyenne (4, 7, 9, 12, 14, 17, 19, 21, 24, E)
+          let finalPred = scaledPred[0].map((val, i) => {
+            // Approximation d'une distribution normale (Box-Muller transform)
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z0 = Math.sqrt(-2.0 * Math.log(u1 === 0 ? 1e-10 : u1)) * Math.cos(2.0 * Math.PI * u2);
+            // Ajout du bruit proportionnel à la déviation standard
+            const valWithNoise = val + (z0 * 0.8); 
+            return Math.round((valWithNoise * stds[i]) + means[i]);
+          });
+
           for(let i=0; i<10; i++) finalPred[i] = Math.max(1, Math.min(25, finalPred[i]));
           finalPred[10] = Math.max(1, Math.min(6, finalPred[10])); // 1-6 (SAMEDI)
           
@@ -377,7 +387,7 @@ export default function Home() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `loto_ia_predictions_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `crescendo_ia_predictions_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
   };
 
@@ -622,9 +632,9 @@ export default function Home() {
           
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Fenêtre Temporelle (LSTMs)</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">Fenêtre Temporelle (Séquence LSTMs)</label>
               <input 
-                type="range" min="4" max="24" value={windowLength} 
+                type="range" min="4" max="100" value={windowLength} 
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
                   setWindowLength(val);
@@ -634,9 +644,10 @@ export default function Home() {
               />
               <div className="flex justify-between text-[10px] font-bold text-slate-500">
                 <span>4 TIRAGES</span>
-                <span className="text-primary">{windowLength}</span>
-                <span>24 TIRAGES</span>
+                <span className="text-primary text-xs">{windowLength}</span>
+                <span>100 TIRAGES</span>
               </div>
+              <p className="text-[9px] text-slate-500 italic">Nombre de tirages analysés en séquence. Le modèle utilise toujours tout l'historique disponible ({data.length} tirages) pour l'entraînement.</p>
             </div>
 
             <div className="space-y-3 pt-4 border-t border-slate-800/50">
