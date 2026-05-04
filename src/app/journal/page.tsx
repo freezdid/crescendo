@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Calendar, Target, ChevronLeft, ArrowRight, Brain, AlertCircle, Sparkles, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
-import { loadDraws, loadPredictions, SavedPrediction } from '@/lib/storage';
+import { loadDraws, loadPredictions, savePredictions, SavedPrediction } from '@/lib/storage';
 import { ProcessedDraw } from '@/lib/model';
 
 const SAMEDI_LETTERS = ['S', 'A', 'M', 'E', 'D', 'I'];
@@ -45,22 +45,18 @@ export default function Journal() {
         clearTimeout(id);
 
         if (json.success && json.data && Array.isArray(json.data) && json.data.length > 0) {
-          // Merge logic: combine local and cloud, removing duplicates by timestamp
+          const cloudPreds = json.data as SavedPrediction[];
           setPredictions(prevLocal => {
-            const cloudPreds = json.data as SavedPrediction[];
             const combined = [...cloudPreds];
-            
-            // Add local ones that aren't in cloud yet
             prevLocal.forEach(p => {
               if (!combined.find(c => c.timestamp === p.timestamp)) {
                 combined.push(p);
               }
             });
-            
             const sorted = combined.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 50);
             
-            // Sync back to local
-            import('@/lib/storage').then(m => m.savePredictions(sorted));
+            // Sync back to local (after setting state)
+            savePredictions(sorted);
             return sorted;
           });
         }
