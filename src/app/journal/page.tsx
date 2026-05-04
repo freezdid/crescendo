@@ -191,7 +191,7 @@ export default function Journal() {
                       </div>
                       <h3 className="text-xl font-black italic text-white tracking-tighter uppercase">Pronostic #{predictions.length - idx}</h3>
                       <div className="flex flex-wrap gap-2 mt-4">
-                        {pred.grilles[0].map((num, i) => (
+                        {pred.grilles?.[0]?.map((num, i) => (
                           <div key={i} className="flex flex-col items-center gap-1">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[10px] shadow-lg ${
                               i === 10 
@@ -207,7 +207,7 @@ export default function Journal() {
                       {pred.grilles.length > 1 && (
                         <div className="flex items-center gap-2 mt-4 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 w-fit">
                            <Sparkles className="w-3 h-3 text-loto-yellow" />
-                           <p className="text-[9px] text-slate-400 font-bold uppercase italic">+ {pred.grilles.length - 1} combinaisons optimisées</p>
+                           <p className="text-[9px] text-slate-400 font-bold uppercase italic">+ {Math.max(0, (pred.grilles?.length || 0) - 1)} combinaisons optimisées</p>
                         </div>
                       )}
                     </div>
