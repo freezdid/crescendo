@@ -103,6 +103,20 @@ export default function Journal() {
     };
   };
 
+  const calculateGain = (nums: number, letter: boolean): string | null => {
+    if (nums === 10) return "Jackpot";
+    if (nums === 9 && letter) return "1 000 €";
+    if (nums === 9) return "500 €";
+    if (nums === 8 && letter) return "100 €";
+    if (nums === 8) return "50 €";
+    if (nums === 7 && letter) return "14 €";
+    if (nums === 7) return "7 €";
+    if (nums === 6 && letter) return "2 €";
+    if (nums === 6) return "1 €";
+    if (letter) return "1 €";
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -154,6 +168,8 @@ export default function Journal() {
           <div className="grid gap-6">
             {predictions.map((pred, idx) => {
               const result = getResultsForPrediction(pred);
+              const gain = result ? calculateGain(result.bestScore.nums, result.bestScore.letter) : null;
+              
               return (
                 <motion.div 
                    key={idx}
@@ -174,7 +190,7 @@ export default function Journal() {
                           <div key={i} className="flex flex-col items-center gap-1">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[10px] shadow-lg ${
                               i === 10 
-                                ? 'bg-loto-red text-white border-2 border-white/20' 
+                                ? 'bg-loto-yellow text-slate-900 border-2 border-white/20' 
                                 : 'bg-primary/10 border border-primary/30 text-primary shadow-primary/5'
                             }`}>
                               {i === 10 ? getLetterFromNum(num) : (num < 10 ? `0${num}` : num)}
@@ -214,16 +230,16 @@ export default function Journal() {
                             </div>
                             
                             <div className="flex flex-col items-center">
-                              <div className={`text-4xl font-black leading-none ${result.bestScore.letter ? 'text-loto-red' : 'text-slate-800'}`}>
+                              <div className={`text-4xl font-black leading-none ${result.bestScore.letter ? 'text-loto-yellow' : 'text-slate-800'}`}>
                                 {result.bestScore.letter ? 'OK' : '-'}
                               </div>
                               <span className="text-[9px] font-black text-slate-500 uppercase tracking-tighter mt-1">Lettre</span>
                             </div>
 
                             <div className="ml-2">
-                               {result.bestScore.nums >= 6 || result.bestScore.letter ? (
+                               {gain ? (
                                  <div className="bg-gradient-to-r from-loto-yellow to-yellow-500 text-slate-950 px-4 py-1.5 rounded-full text-[10px] font-black shadow-lg shadow-loto-yellow/20 animate-bounce uppercase">
-                                    Gagnant
+                                    Gain : {gain}
                                  </div>
                                ) : (
                                  <div className="px-4 py-1.5 rounded-full border border-slate-800 text-slate-600 text-[10px] font-black uppercase tracking-widest">
