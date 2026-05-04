@@ -368,13 +368,23 @@ export default function Home() {
         await saveLastPrediction(topGrilles);
         // Save history to local
         await savePredictions(updatedHistory);
-        // Save to cloud
-        await fetch(`/api/sync?type=predictions&t=${Date.now()}`, {
+        
+        // Set to Local Saved immediately so UI isn't blocked
+        setSyncStatus("Local Saved");
+
+        // Save to cloud (Background, non-blocking)
+        fetch(`/api/sync?type=predictions&t=${Date.now()}`, {
           method: 'POST',
           headers: { 'Cache-Control': 'no-cache' },
           body: JSON.stringify({ data: updatedHistory, type: 'predictions' })
+        }).then(res => {
+          if (res.ok) setSyncStatus("Cloud Synced");
+          else setSyncStatus("Local Saved (Cloud Error)");
+        }).catch(e => {
+          console.error("Cloud push failed:", e);
+          setSyncStatus("Local Saved (Offline)");
         });
-        setSyncStatus("Cloud Synced");
+        
       } catch (e) { 
         console.error("Critical Save Error:", e);
         setSyncStatus("Error Saving");

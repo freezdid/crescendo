@@ -26,9 +26,12 @@ export default function Journal() {
       // 2. Load Cloud
       try {
         const timestamp = Date.now();
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
         // Sync Draws first (needed for matching)
         if (!draws || draws.length === 0) {
-          const resDraws = await fetch(`/api/sync?type=draws&t=${timestamp}`, { cache: 'no-store' });
+          const resDraws = await fetch(`/api/sync?type=draws&t=${timestamp}`, { cache: 'no-store', signal: controller.signal });
           const jsonDraws = await resDraws.json();
           if (jsonDraws.success && jsonDraws.data) {
             setData(jsonDraws.data);
@@ -36,9 +39,11 @@ export default function Journal() {
         }
 
         // Sync Predictions
-        const res = await fetch(`/api/sync?type=predictions&t=${timestamp}`, { cache: 'no-store' });
+        const res = await fetch(`/api/sync?type=predictions&t=${timestamp}`, { cache: 'no-store', signal: controller.signal });
         const json = await res.json();
         
+        clearTimeout(id);
+
         if (json.success && json.data && Array.isArray(json.data) && json.data.length > 0) {
           // Merge logic: combine local and cloud, removing duplicates by timestamp
           setPredictions(prevLocal => {
@@ -59,7 +64,7 @@ export default function Journal() {
             return sorted;
           });
         }
-      } catch (e) { console.error("Cloud sync failed:", e); }
+      } catch (e) { console.warn("Cloud sync failed or timed out, using local data:", e); }
 
       setLoading(false);
     }
