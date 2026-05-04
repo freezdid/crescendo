@@ -3,13 +3,13 @@
 @theme {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   
-  --color-background: #0b0510; /* Deep Purple Dark */
-  --color-foreground: #fdf2f8;
-  --color-primary: #d946ef; /* Fuchsia-500 */
-  --color-accent: #ec4899; /* Pink-500 */
-  --color-loto-yellow: #06b6d4; /* Cyan-500 */
-  --color-panel: #1a0b26;
-  --color-card: #2d1341;
+  --color-background: #07152b; /* Deep Navy Blue */
+  --color-foreground: #ffffff;
+  --color-primary: #ff6a00; /* Crescendo Orange */
+  --color-accent: #00b4d8; /* Crescendo Cyan */
+  --color-loto-yellow: #ff9d00; /* Secondary Orange */
+  --color-panel: #0d2346;
+  --color-card: #15325e;
   
   --radius-3xl: 1.5rem;
 }
@@ -21,8 +21,8 @@
     font-family: var(--font-sans);
     min-height: 100vh;
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(217, 70, 239, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+      radial-gradient(circle at 0% 0%, rgba(255, 106, 0, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(0, 180, 216, 0.05) 0%, transparent 50%);
     background-attachment: fixed;
   }
 }
@@ -48,7 +48,7 @@
   .btn-accent {
     @apply flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-200;
     @apply bg-accent text-white hover:scale-[1.02] active:scale-[0.98];
-    box-shadow: 0 4px 15px rgba(225, 0, 26, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3);
   }
 
   .btn-ghost {
@@ -58,21 +58,22 @@
 
   .number-ball {
     @apply flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full font-black text-lg md:text-xl;
-    @apply text-white shadow-lg relative overflow-hidden transition-transform hover:scale-105;
-    background: radial-gradient(circle at 35% 35%, #d946ef, #7e22ce);
-    border: 2px solid rgba(255, 255, 255, 0.15);
+    @apply shadow-lg relative overflow-hidden transition-transform hover:scale-105;
+    background: radial-gradient(circle at 35% 35%, #ffffff, #e2e8f0);
+    color: var(--color-accent); /* Cyan text */
+    border: 3px solid var(--color-accent); /* Cyan border */
   }
 
   .number-ball::after {
     content: '';
-    @apply absolute inset-0 opacity-30;
-    background: linear-gradient(135deg, white, transparent 50%);
+    @apply absolute inset-0 opacity-40;
+    background: linear-gradient(135deg, white 0%, transparent 40%);
   }
 
   .number-ball.chance {
     @apply text-white border-none;
-    background: radial-gradient(circle at 35% 35%, #22d3ee, #0891b2);
-    box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+    background: radial-gradient(circle at 35% 35%, var(--color-primary), #d95a00);
+    box-shadow: 0 0 25px rgba(255, 106, 0, 0.4);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
