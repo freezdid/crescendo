@@ -69,8 +69,13 @@ export default function HistoryPage() {
           <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-bold uppercase tracking-widest mb-2">
             <ChevronLeft className="w-4 h-4" /> Retour au Lab
           </Link>
-          <h1 className="text-4xl font-black tracking-tighter">ARCHIVES <span className="text-primary">CRESCENDO</span></h1>
-          <p className="text-slate-400 font-medium">Historique complet extrait de la base SQLite locale.</p>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-black tracking-tighter">ARCHIVES <span className="text-primary italic">CRESCENDO</span></h1>
+            <div className="bg-primary/20 text-primary border border-primary/30 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-tighter">
+              {draws.length} Tirages en BDD
+            </div>
+          </div>
+          <p className="text-slate-400 font-medium max-w-lg">Historique complet extrait de la base SQLite et synchronisé avec IndexedDB pour une performance maximale.</p>
         </div>
 
         <div className="relative w-full md:w-96">

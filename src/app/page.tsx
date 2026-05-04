@@ -430,23 +430,7 @@ export default function Home() {
     setSimResult({ score, analysis });
   };
 
-  const handleSyncModel = async () => {
-    if (!modelReady) return;
-    setIsSyncingModel(true);
-    try {
-      const modelData = await exportModel();
-      if (modelData) {
-        await fetch('/api/sync', {
-          method: 'POST',
-          body: JSON.stringify({ data: modelData, type: 'model' })
-        });
-        setSyncStatus("IA Cloud Ready");
-      }
-    } catch (e) {
-      console.error("Sync model failed:", e);
-    }
-    setIsSyncingModel(false);
-  };
+
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -536,14 +520,7 @@ export default function Home() {
               <Calendar className="w-5 h-5" />
               <span>Historique</span>
             </Link>
-            <button 
-                onClick={handleSyncModel}
-                disabled={!modelReady || isSyncingModel}
-                className={`btn-ghost ${isSyncingModel ? 'animate-pulse' : ''}`}
-              >
-                <RefreshCw className={`w-5 h-5 ${isSyncingModel ? 'animate-spin' : ''}`} />
-                <span>Sync IA</span>
-            </button>
+
             <button 
                 onClick={() => handleScrape(true)} 
                 disabled={isScraping}
@@ -634,8 +611,8 @@ export default function Home() {
         <motion.div className="md:col-span-2 glass-panel p-6 flex flex-col gap-6">
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-bold text-lg">Paramètres</h3>
-              <p className="text-slate-400 text-sm">Gestion des données</p>
+              <h3 className="font-bold text-lg">Système & BDD</h3>
+              <p className="text-slate-400 text-sm">Gestion des données locales & cloud</p>
             </div>
             <Settings className="text-accent w-5 h-5" />
           </div>
@@ -727,22 +704,39 @@ export default function Home() {
           <AnimatePresence>
             {isTraining && (
               <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-2 z-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center gap-4 z-10"
               >
-                <div className="flex justify-between text-[10px] font-black uppercase">
-                  <span className="text-accent">Entraînement en cours</span>
+                <div className="flex justify-between w-full text-[10px] font-black uppercase">
+                  <span className="text-accent animate-pulse">Formation du Réseau Neuronal...</span>
                   <span className="text-white">{progress}%</span>
                 </div>
-                <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full bg-accent"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                  />
+                
+                {/* Neural Grid Visualization */}
+                <div className="grid grid-cols-10 gap-1 p-2 bg-slate-900/80 rounded-xl border border-white/5">
+                  {Array.from({ length: 100 }).map((_, i) => {
+                    const isFilled = i < progress;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={false}
+                        animate={{ 
+                          backgroundColor: isFilled ? 'var(--color-primary)' : 'rgba(255, 255, 255, 0.03)',
+                          scale: isFilled ? [1, 1.2, 1] : 1,
+                          boxShadow: isFilled ? '0 0 10px var(--color-primary)' : 'none'
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="w-3 h-3 md:w-4 md:h-4 rounded-sm"
+                      />
+                    );
+                  })}
                 </div>
+                
+                <p className="text-[9px] text-slate-500 italic text-center">
+                  Crystallisation des poids synaptiques ({lossHistory.length > 0 ? `Loss: ${lossHistory[lossHistory.length-1].loss.toFixed(6)}` : 'Initiation...'})
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
