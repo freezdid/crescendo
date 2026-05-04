@@ -634,7 +634,10 @@ export default function Home() {
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase">Fenêtre Temporelle (Séquence LSTMs)</label>
               <input 
-                type="range" min="4" max="100" value={windowLength} 
+                type="range" 
+                min="4" 
+                max={data.length > 5 ? Math.min(150, data.length - 2) : 100} 
+                value={windowLength} 
                 onChange={(e) => {
                   const val = parseInt(e.target.value);
                   setWindowLength(val);
@@ -645,7 +648,7 @@ export default function Home() {
               <div className="flex justify-between text-[10px] font-bold text-slate-500">
                 <span>4 TIRAGES</span>
                 <span className="text-primary text-xs">{windowLength}</span>
-                <span>100 TIRAGES</span>
+                <span>{data.length > 5 ? Math.min(150, data.length - 2) : 100} TIRAGES</span>
               </div>
               <p className="text-[9px] text-slate-500 italic">Nombre de tirages analysés en séquence. Le modèle utilise toujours tout l'historique disponible ({data.length} tirages) pour l'entraînement.</p>
             </div>
