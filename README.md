@@ -90,6 +90,8 @@ L'application sera accessible sur `http://localhost:3000`
 
 ```env
 BLOB_READ_WRITE_TOKEN=<votre-token-vercel-blob>
+# Store en accès « privé » : lectures et écritures passent par le SDK
+# @vercel/blob côté serveur (src/lib/blob.ts), jamais par URL publique.
 
 # Recommandé : clé admin protégeant les écritures cloud (/api/sync)
 # et le scan approfondi (/api/crescendo?deep=true).

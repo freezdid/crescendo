@@ -64,6 +64,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\app/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| ad0e80a7-5014-431a-867d-ec2aadc4bee8 | 🔴 bugfix | Modèle restauré non compilé + hydration #418 : les 2 causes restantes de l'entraînement muet, corrigées et validées par CDP (2 cycles) | 2026-10-17 |
 | aa3be770-8237-480d-82d3-545b06cef6fa | 🔴 bugfix | Entraînement muet corrigé : setBackend('webgpu') résout même backend mort — validation par sonde + bannière d'erreur | 2026-10-17 |
 | eda6b4fd-e6d4-41a5-991a-86cd73dafc18 | ✅ change | Dashboard init now lazily imports TF init and uses fetchWithTimeout for cloud sync | 2026-10-17 |
 | 72ac582d-a6fd-48b0-bc23-110fdeb06c47 | 🔵 discovery | Training monitor UI: mode switcher, train/backtest/monitor controls, and a 4-metric HUD | 2026-10-17 |
@@ -73,9 +74,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 2f5fb016-1274-4f5c-bc70-62eee24bf80f | ✅ change | handleTrainModel and handleGenerateCombinations now lazy-import TF.js and model builders | 2026-10-17 |
 | de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
 | 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
-| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
 
-**Key concepts:** tensorflow-js, webgpu, backend-fallback, silent-failure, cdp, brave-headless, error-surfacing, training, dynamic-import, fetch-timeout
+**Key concepts:** tensorflow-js, indexeddb, model-restore, compile, hydration, react-418, useSyncExternalStore, silent-failure, webgpu, backend-fallback
 
 ### src\app\api\crescendo/
 | ID | Type | Title | Date |
@@ -187,6 +187,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\lib/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| ad0e80a7-5014-431a-867d-ec2aadc4bee8 | 🔴 bugfix | Modèle restauré non compilé + hydration #418 : les 2 causes restantes de l'entraînement muet, corrigées et validées par CDP (2 cycles) | 2026-10-17 |
 | aa3be770-8237-480d-82d3-545b06cef6fa | 🔴 bugfix | Entraînement muet corrigé : setBackend('webgpu') résout même backend mort — validation par sonde + bannière d'erreur | 2026-10-17 |
 | 3f8bfa83-3969-4bd3-8cf4-826a6fa9310c | 🔄 refactor | storage.ts removes static TF import: type-only tfType plus dynamic imports for model IO | 2026-10-17 |
 | 3388b629-38fa-4c59-a60c-8a064d626197 | 🔄 refactor | model.ts slimmed to 168 lines: only network builders, TF init, and backtest remain | 2026-10-17 |
@@ -196,9 +197,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
 | 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
 | 7542801a-a891-49b7-9cc5-1917da7a4aa2 | ⚖️ decision | useSyncExternalStore for admin-key state to satisfy react-hooks/set-state-in-effect | 2026-10-17 |
-| d218cc78-b15f-458b-a968-5590ca59b7ee | 🟣 feature | Performance finding persisted as memory (id b665873b), importance 1 | 2026-10-17 |
 
-**Key concepts:** tensorflow-js, webgpu, backend-fallback, silent-failure, cdp, brave-headless, error-surfacing, training, refactor, type-only-import
+**Key concepts:** tensorflow-js, indexeddb, model-restore, compile, hydration, react-418, useSyncExternalStore, silent-failure, webgpu, backend-fallback
 
 **Recent decisions:** useSyncExternalStore for admin-key state to satisfy react-hooks/set-state-in-effect
 

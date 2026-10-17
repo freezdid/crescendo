@@ -1,12 +1,19 @@
-import { put, list } from '@vercel/blob';
+import { put, get } from '@vercel/blob';
 
 const DEFAULT_BLOB_PATH = 'crescendo_history.json';
 
+/**
+ * This project's Blob store has private access:
+ * - writes must declare `access: 'private'` (public puts are rejected)
+ * - repeated writes to the same pathname need `allowOverwrite: true`
+ * - reads must go through the authenticated `get()` call (raw blob URLs return 403)
+ */
 export async function saveToBlob(data: unknown, pathname: string = DEFAULT_BLOB_PATH) {
   try {
     const { url } = await put(pathname, JSON.stringify(data), {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
     return url;
   } catch (e) {
@@ -17,12 +24,9 @@ export async function saveToBlob(data: unknown, pathname: string = DEFAULT_BLOB_
 
 export async function loadFromBlob(pathname: string = DEFAULT_BLOB_PATH) {
   try {
-    const { blobs } = await list();
-    const blob = blobs.find(b => b.pathname === pathname);
-    if (!blob) return null;
-
-    const response = await fetch(blob.url);
-    return await response.json();
+    const result = await get(pathname, { access: 'private' });
+    if (!result || result.statusCode !== 200 || !result.stream) return null;
+    return await new Response(result.stream).json();
   } catch (e) {
     console.error(`Vercel Blob Load Error [${pathname}]:`, e);
     return null;

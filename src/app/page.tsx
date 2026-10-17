@@ -53,6 +53,7 @@ import {
   getAdminKeySnapshot
 } from '@/lib/storage';
 import { fetchWithTimeout } from '@/lib/net';
+import { validateSyncPayload } from '@/lib/validate';
 
 // Pure helper: next Saturday draw countdowns (module-level so it is stable for hooks)
 // Static placeholders rendered on the server so the build-time HTML is
@@ -288,8 +289,12 @@ export default function Home() {
       try {
         const syncRes = await fetchWithTimeout('/api/sync', { cache: 'no-store' }, 20000);
         const syncJson = await syncRes.json();
-        if (syncJson.success && syncJson.data && syncJson.data.length > (savedDraws?.length || 0)) {
-          const processed = processData(syncJson.data);
+        const cloudDraws = Array.isArray(syncJson.data) ? syncJson.data : [];
+        // Reject cloud data that does not match the current schema: legacy backups
+        // (old 5-number game) must never replace local draws or feed the pipeline.
+        const cloudDrawsValid = cloudDraws.length > 0 && validateSyncPayload('draws', cloudDraws) === null;
+        if (syncJson.success && cloudDrawsValid && cloudDraws.length > (savedDraws?.length || 0)) {
+          const processed = processData(cloudDraws);
           setData(processed);
           await saveDraws(processed);
           const computedStats = calculateComprehensiveStats(processed);

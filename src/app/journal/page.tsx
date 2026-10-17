@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { loadDraws, loadPredictions, savePredictions, SavedPrediction } from '@/lib/storage';
 import { ProcessedDraw } from '@/lib/pipeline';
 import { NUM_TO_LETTER, extractNumbersAndLetter } from '@/lib/stats';
+import { validateSyncPayload } from '@/lib/validate';
 
 export default function JournalPage() {
   const [data, setData] = useState<ProcessedDraw[]>([]);
@@ -30,7 +31,7 @@ export default function JournalPage() {
         if (!draws || draws.length === 0) {
           const resDraws = await fetch(`/api/sync?type=draws&t=${timestamp}`, { cache: 'no-store', signal: controller.signal });
           const jsonDraws = await resDraws.json();
-          if (jsonDraws.success && jsonDraws.data) {
+          if (jsonDraws.success && Array.isArray(jsonDraws.data) && validateSyncPayload('draws', jsonDraws.data) === null) {
             setData(jsonDraws.data);
           }
         }
@@ -39,7 +40,7 @@ export default function JournalPage() {
         const json = await res.json();
         clearTimeout(id);
 
-        if (json.success && json.data && Array.isArray(json.data) && json.data.length > 0) {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0 && validateSyncPayload('predictions', json.data) === null) {
           const cloudPreds = json.data as SavedPrediction[];
           setPredictions(prevLocal => {
             const combined = [...cloudPreds];
