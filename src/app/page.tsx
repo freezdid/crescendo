@@ -1,27 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity, Sparkles, RefreshCw, Trophy, 
   Target, Brain, History, Flame, 
   Copy, Check, Info, TrendingUp, CheckCircle2,
-  Cpu, Eye, Layers,
+  Cpu, Eye, Layers, KeyRound,
   Timer, Clock, Calendar
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import * as tf from '@tensorflow/tfjs';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import type * as tfType from '@tensorflow/tfjs';
 
 import { 
   processData, 
   createDataset, 
-  buildAdvancedModel, 
-  buildFastModel, 
   ProcessedDraw, 
-  initTensorFlow, 
   TRAINING_CONFIG 
-} from '@/lib/model';
+} from '@/lib/pipeline';
+
+const LossChart = dynamic(() => import('@/components/LossChart'), { ssr: false });
 
 import { 
   calculateComprehensiveStats, 
@@ -46,8 +45,14 @@ import {
   savePredictions, 
   SavedPrediction, 
   saveLastPrediction, 
-  loadLastPrediction 
+  loadLastPrediction,
+  getSyncHeaders,
+  getAdminKey,
+  setAdminKey,
+  subscribeAdminKey,
+  getAdminKeySnapshot
 } from '@/lib/storage';
+import { fetchWithTimeout } from '@/lib/net';
 
 // Pure helper: next Saturday draw countdowns (module-level so it is stable for hooks)
 function computeSaturdayCountdowns(now: Date) {
@@ -97,6 +102,9 @@ export default function Home() {
   const [syncStatus, setSyncStatus] = useState("Local");
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [showTrainingMonitor, setShowTrainingMonitor] = useState(false);
+  const [showKeyPanel, setShowKeyPanel] = useState(false);
+  const [keyDraft, setKeyDraft] = useState('');
+  const hasAdminKey = useSyncExternalStore(subscribeAdminKey, getAdminKeySnapshot, () => false);
 
   // Strategy & Generation settings
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyType>('HYBRID_AI');
@@ -126,7 +134,7 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
   // References
-  const tfModel = useRef<tf.LayersModel | null>(null);
+  const tfModel = useRef<tfType.LayersModel | null>(null);
   const scalerRef = useRef<any>(null);
   const lastTwelveRef = useRef<number[][] | null>(null);
 
@@ -158,9 +166,21 @@ export default function Home() {
     setIsScraping(true);
     setScrapeStatus(deep ? "Scraping approfondi (2025-2026)..." : "Vérification des derniers tirages...");
     try {
-      const res = await fetch(`/api/crescendo${deep ? '?deep=true' : ''}`);
-      const json = await res.json();
-      if (json.success && json.results.length > 0) {
+      const res = await fetchWithTimeout(
+        `/api/crescendo${deep ? '?deep=true' : ''}`,
+        { headers: getSyncHeaders() },
+        deep ? 120000 : 30000
+      );
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        if (res.status === 401) setScrapeStatus("Clé admin requise pour le scan approfondi");
+        else if (res.status === 429) setScrapeStatus(json?.error || "Trop de requêtes — réessayez dans un instant");
+        else setScrapeStatus(json?.error || "Service de tirages indisponible");
+        return;
+      }
+
+      if (json?.success && json.results.length > 0) {
         // Merge server results with local data (dedupe by date+time) to avoid any data loss
         const merged = new Map<string, any>();
         for (const d of data) merged.set(`${d.date}|${d.time}`, d);
@@ -176,24 +196,31 @@ export default function Home() {
         updateModelReferences(processed);
 
         if (!tfModel.current) {
+          const { buildAdvancedModel } = await import('@/lib/model');
           tfModel.current = buildAdvancedModel(windowLength, 36, 11);
         }
 
         setScrapeStatus(isNew ? `${processed.length - data.length} nouveau(x) tirage(s) synchronisé(s) !` : "Tirages à jour");
 
         // Background Cloud Push
-        fetch('/api/sync', {
+        fetchWithTimeout('/api/sync', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getSyncHeaders(true),
           body: JSON.stringify({ data: processed, type: 'draws' })
+        }, 20000).then(pushRes => {
+          if (pushRes.status === 401) setSyncStatus("Clé admin requise");
         }).catch(err => console.error("Sync push failed:", err));
+      } else {
+        setScrapeStatus("Réponse inattendue du service — données locales conservées");
       }
     } catch (e) {
       console.error("Scrape error:", e);
-      setScrapeStatus("Données locales conservées");
+      const aborted = e instanceof Error && e.name === 'AbortError';
+      setScrapeStatus(aborted ? "Délai dépassé — données locales conservées" : "Échec de la synchronisation — données locales conservées");
+    } finally {
+      setIsScraping(false);
+      setTimeout(() => setScrapeStatus(""), 4500);
     }
-    setIsScraping(false);
-    setTimeout(() => setScrapeStatus(""), 4500);
   };
 
   // Update countdown every second
@@ -210,10 +237,11 @@ export default function Home() {
   // Initial Load
   useEffect(() => {
     async function init() {
-      // 0. TensorFlow Backend
+      // 0. TensorFlow Backend (lazy-loaded so TF.js stays out of the initial bundle)
       try {
-        await initTensorFlow();
-        setBackendName(tf.getBackend()?.toUpperCase() || 'CPU');
+        const { initTensorFlow } = await import('@/lib/model');
+        const backend = await initTensorFlow();
+        setBackendName(backend || 'CPU');
       } catch (e) {
         console.warn('TF init fallback:', e);
         setBackendName('CPU');
@@ -243,7 +271,7 @@ export default function Home() {
       // 2. Cloud Sync
       setSyncStatus("Synchronisation...");
       try {
-        const syncRes = await fetch('/api/sync', { cache: 'no-store' });
+        const syncRes = await fetchWithTimeout('/api/sync', { cache: 'no-store' }, 20000);
         const syncJson = await syncRes.json();
         if (syncJson.success && syncJson.data && syncJson.data.length > (savedDraws?.length || 0)) {
           const processed = processData(syncJson.data);
@@ -311,10 +339,14 @@ export default function Home() {
     setCurrentLoss(null);
     setInitialLoss(null);
 
-    let xs: tf.Tensor | null = null;
-    let ys: tf.Tensor | null = null;
+    let xs: tfType.Tensor | null = null;
+    let ys: tfType.Tensor | null = null;
 
     try {
+      // Lazy-load TF.js + model builders (kept out of the initial bundle)
+      const tf = await import('@tensorflow/tfjs');
+      const { buildAdvancedModel, buildFastModel } = await import('@/lib/model');
+
       // Ensure TF is ready
       await tf.ready();
 
@@ -412,6 +444,7 @@ export default function Home() {
 
     // If Neural Model is ready, sample candidate sequences
     if (tfModel.current && lastTwelveRef.current && scalerRef.current) {
+      const tf = await import('@tensorflow/tfjs');
       const scaler = scalerRef.current;
       const means = scaler.means.slice(0, 11);
       const stds = scaler.stds.slice(0, 11);
@@ -422,7 +455,7 @@ export default function Home() {
         tf.tidy(() => {
           const noise = tf.randomNormal([1, currentWindow, 36], 0, 0.012 + (p * 0.001));
           const input = tf.add(tf.tensor3d([inputData]), noise);
-          const output = tfModel.current!.predict(input) as tf.Tensor;
+          const output = tfModel.current!.predict(input) as tfType.Tensor;
           const scaledPred = output.arraySync() as number[][];
 
           if (scaledPred && scaledPred[0]) {
@@ -466,11 +499,20 @@ export default function Home() {
     await savePredictions(updatedHistory);
 
     // Background push to Cloud
-    fetch('/api/sync', {
+    fetchWithTimeout('/api/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getSyncHeaders(true),
       body: JSON.stringify({ data: updatedHistory, type: 'predictions' })
+    }, 20000).then(pushRes => {
+      if (pushRes.status === 401) setSyncStatus("Clé admin requise");
     }).catch(err => console.error("Cloud push failed:", err));
+  };
+
+  const handleSaveAdminKey = () => {
+    const key = keyDraft.trim();
+    setAdminKey(key);
+    setShowKeyPanel(false);
+    setSyncStatus(key ? "Clé admin enregistrée" : "Clé admin effacée");
   };
 
   const handleCopyGrille = (analysis: GrilleAnalysis, index: number) => {
@@ -570,6 +612,64 @@ export default function Home() {
               <span className="text-white/20">•</span>
               <span className="text-slate-400">Sync:</span>
               <span className="text-amber-400 font-semibold">{syncStatus}</span>
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setKeyDraft(getAdminKey());
+                  setShowKeyPanel((v) => !v);
+                }}
+                className="btn-ghost-dark text-xs py-1.5 px-3"
+                title="Clé admin cloud (SYNC_SECRET)"
+                aria-expanded={showKeyPanel}
+                aria-haspopup="dialog"
+              >
+                <KeyRound className={`w-3.5 h-3.5 ${hasAdminKey ? 'text-emerald-400' : 'text-slate-500'}`} />
+                <span className="hidden sm:inline">Clé</span>
+              </button>
+
+              <AnimatePresence>
+                {showKeyPanel && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    role="dialog"
+                    aria-label="Clé admin cloud"
+                    className="absolute right-0 top-full mt-2 w-72 luxury-panel p-3.5 z-50 space-y-2.5 text-left"
+                  >
+                    <div className="text-[11px] font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                      Clé admin cloud
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Définie dans Vercel sous <span className="text-slate-200 font-semibold">SYNC_SECRET</span>. Requise pour écrire dans le cloud quand la protection est activée.
+                    </p>
+                    <input
+                      type="password"
+                      value={keyDraft}
+                      onChange={(e) => setKeyDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveAdminKey();
+                        if (e.key === 'Escape') setShowKeyPanel(false);
+                      }}
+                      placeholder="Votre clé secrète"
+                      autoComplete="off"
+                      className="w-full bg-[#080b13] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400/50 transition-colors"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button onClick={handleSaveAdminKey} className="btn-gold text-[11px] py-1 px-3">
+                        Enregistrer
+                      </button>
+                      <span className={`ml-auto text-[10px] font-bold ${hasAdminKey ? 'text-emerald-400' : 'text-slate-500'}`}>
+                        {hasAdminKey ? 'Clé active' : 'Aucune clé'}
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <button
@@ -921,22 +1021,7 @@ export default function Home() {
 
                 {lossHistory.length > 0 ? (
                   <div className="h-32 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={lossHistory}>
-                        <XAxis dataKey="epoch" stroke="#475569" fontSize={10} />
-                        <YAxis stroke="#475569" fontSize={10} domain={['auto', 'auto']} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: '#0b0f19', borderColor: '#334155', borderRadius: '0.5rem', fontSize: '11px' }} 
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="loss" 
-                          stroke="#06b6d4" 
-                          strokeWidth={2} 
-                          dot={false} 
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <LossChart data={lossHistory} />
                   </div>
                 ) : (
                   <div className="h-32 flex items-center justify-center text-xs text-slate-500">

@@ -11,130 +11,193 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### ./
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 80dcd576-004a-4081-8347-80b05298bcf7 | 🟣 feature | Wired Vercel Cron via new vercel.json (daily 19:30 UTC) and optional CRON_SECRET guard | 2026-10-17 |
-| c95ba48a-9f3b-4517-b91b-d691775c4ae2 | 🔴 bugfix | Chronological ordering hardened at the DB layer with shared parseDrawDate (real data was NOT ordered) | 2026-10-17 |
-| 8f3388fb-45e1-4615-84f9-1dcb55b3e62d | ✅ change | ESLint flat config warns on require imports and explicit any | 2026-10-17 |
-| fd997ce3-f4f7-4fff-98de-d3bd4aa46ee4 | 🔵 discovery | Next.js ESLint flat config merges Next presets and enables strict TS enforcement | 2026-10-17 |
-| e54bae68-cc3c-42e1-88df-5cf58c3f64a3 | ✅ change | Next.js 16 / TypeScript 5 tsconfig selected as canonical type-check and build configuration | 2026-10-17 |
-| 758812b3-ba95-40f6-8c0e-d48aa4c5ca38 | 🔵 discovery | Standard Next.js TypeScript configuration with strict bundle settings | 2026-10-17 |
-| b0b209c0-80d5-4bf3-84e5-164081892244 | 🟣 feature | Crescendo project entering finalization pass for dashboard polish and documentation | 2026-10-17 |
-| 6a835841-967a-44e0-9c2b-7d0a854d2778 | ✅ change | README.md undergoes major rewrite of header/layout | 2026-10-17 |
-| dc2b3277-5883-48ac-9a57-9b9d5311caf0 | 🔵 discovery | README.md rewritten for v2.5 Pro with expanded feature taxonomy | 2026-10-17 |
-| 69eeb941-2c7f-46bc-92ee-9c04f8299655 | ✅ change | Git status reveals multi-file frontend edit cycle | 2026-10-17 |
+| 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 7a511223-1d39-4181-a8b9-8b273df6215e | 🔵 discovery | README documents stack and architecture: Next.js 16, TF.js LSTM, Obsidian Glass theme | 2026-10-17 |
+| c7bcfdc9-ab6a-4c75-aa8a-1220f05944c2 | 🔵 discovery | README documents environment variables with BLOB_READ_WRITE_TOKEN | 2026-10-17 |
+| a88fe3e0-f53d-49c8-8d86-2934b40f4452 | 🔴 bugfix | Commit dc67d7c fixes first Saturday draw to 13h (7 draws 13h-19h) | 2026-10-17 |
+| f2247f9b-b817-41d7-8964-a79eacae5dfa | 🔴 bugfix | Commit dc67d7c pushed: first Saturday draw corrected to 13h (7 draws 13h–19h) | 2026-10-17 |
+| 99de79fc-bdac-4ffd-809a-e8649dbb3569 | ✅ change | Small follow-up edits touch AGENTS.md, README.md, and page.tsx (10+/9-) | 2026-10-17 |
+| 709cea86-a625-41c0-8cd7-3aa3f5123028 | 🔵 discovery | README documents a real-time timer for the six Saturday draws (14h–19h) | 2026-10-17 |
+| 12b67e9c-781b-44a6-a85c-0af097f6486b | 🔵 discovery | README documents the 6 Saturday draws (14h–19h) real-time timer | 2026-10-17 |
+| d05d3149-7bb1-492c-ba30-6adaf9c84dd8 | ✅ change | Committed e55493f and pushed to origin/main: 77 files, 26857 insertions | 2026-10-17 |
 
-**Key concepts:** Vercel, cron-schedule, vercel.json, CRON_SECRET, deployment, gotcha, how-it-works, chronological-order, shared-module, 1er-date-parsing
+**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
 
 ### .agents\skills\impeccable/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
+| 0ac51d3a-1d08-4883-bc1e-9691e8d2ee2e | 🔵 discovery | Impeccable skill directory contains reference docs, subagent toml files, and ~5.5MB total | 2026-10-17 |
+| 61e9aa1c-865c-41bd-8b41-871de03c0cfc | 🟣 feature | Installed impeccable design skill; detector findings fixed (gradient text ×3, bounce) | 2026-10-17 |
+| 7376e6bc-c5b8-4e41-a437-e620178ea680 | 🟣 feature | Impeccable skill installed and detector findings fixed (gradient text ×3, bounce) | 2026-10-17 |
+| bcaa1ce9-da1c-45e4-b62d-5754b1d5f03f | 🔵 discovery | Impeccable SKILL.md defines modes, ~25 sub-commands, and setup launcher | 2026-10-17 |
+| 7b3c8c2d-4d93-43d6-9568-81d26b80ca7b | 🟣 feature | Impeccable design skill installed into project .agents/skills directory | 2026-10-17 |
 | 2f985cf6-8cca-4565-abec-a0b73da91427 | 🟣 feature | Installed impeccable design skill; detector findings fixed (gradient text ×3, bounce easing) | 2026-10-17 |
 
-**Key concepts:** impeccable-skill, design-detector, gradient-text, animate-bounce, agent-skills, UI-polish
+**Key concepts:** git-staging, finalization-pass, impeccable-skill, vendored-dependency, line-endings, agent-skills, subagents, reference-docs, design-detector, gradient-text
+
+### .agents\skills\impeccable\reference/
+| ID | Type | Title | Date |
+|----|------|-------|------|
+| 5c53a082-d14f-41f0-9668-8979a4bcab27 | 🔵 discovery | Impeccable craft-floor reference defines mechanical design checks and refusal list | 2026-10-17 |
+| 4e63a7df-c1c5-40e9-8235-f2e8b548daf9 | 🔵 discovery | craft-floor.md defines quality checks and explicit "Refuse" antipatterns | 2026-10-17 |
+
+**Key concepts:** impeccable-skill, craft-floor, design-principles, ui-polish, design-refusals, design-antipatterns, gradient-text
 
 ### public/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| c95ba48a-9f3b-4517-b91b-d691775c4ae2 | 🔴 bugfix | Chronological ordering hardened at the DB layer with shared parseDrawDate (real data was NOT ordered) | 2026-10-17 |
-| 69c7f26d-629e-48f3-8a81-2e31665467c7 | ✅ change | Seed dataset moved to public/seed-draws.json and auto-seeds empty SQLite DB on boot | 2026-10-17 |
-| b0b209c0-80d5-4bf3-84e5-164081892244 | 🟣 feature | Crescendo project entering finalization pass for dashboard polish and documentation | 2026-10-17 |
+| d05d3149-7bb1-492c-ba30-6adaf9c84dd8 | ✅ change | Committed e55493f and pushed to origin/main: 77 files, 26857 insertions | 2026-10-17 |
+| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
+| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
+| 92568c0b-84a1-493f-a726-3f7d4ff1d5f0 | 🔴 bugfix | Chronological ordering hardened at the DB layer with shared parseDrawDate | 2026-10-17 |
+| 5223c123-73a2-47aa-aef4-394c8c2f5900 | 🔴 bugfix | Date-sorted DB and seed both yield 0 ordering violations and 0 NaN | 2026-10-17 |
+| 09d35b2a-d39c-429d-8d26-a470075247f4 | 🔵 discovery | Ordering audit: seed has 151 asc violations, live DB 24, but sets overlap 100% | 2026-10-17 |
+| 5f735b4e-4750-4b2a-96b9-3513136f2219 | 🔵 discovery | Live DB ordering by id does not match chronology; count 343 but max id 434 | 2026-10-17 |
+| 203e8980-9ce6-4808-98d6-d41dc9a61a4d | 🔵 discovery | Seed of 343 draws inserts idempotently but first/last dates appear reversed | 2026-10-17 |
+| 7731e46a-5b09-4906-895e-af08d71bc50c | ✅ change | Seven-item finalization todo list completed across frontend, docs, and tooling | 2026-10-17 |
+| b24e9d4c-8d78-442f-b485-4c3f37d7dba4 | ✅ change | Seed dataset moved to public/seed-draws.json and auto-seeds empty SQLite DB on boot | 2026-10-17 |
 
-**Key concepts:** how-it-works, chronological-order, shared-module, gotcha, 1er-date-parsing, single-source-of-truth, seed-data, SQLite, offline-fallback, deployment
+**Key concepts:** git-commit, git-push, finalization-pass, vendored-dependency, git-staging, impeccable-skill, line-endings, git-index, staged-changes, bugfix
 
 ### src\app/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 2f985cf6-8cca-4565-abec-a0b73da91427 | 🟣 feature | Installed impeccable design skill; detector findings fixed (gradient text ×3, bounce easing) | 2026-10-17 |
-| 301b26ae-482d-43b6-a847-3907dc415c36 | 🔴 bugfix | Fixed long-standing chronological ordering bug: processData reversed an already chronological array | 2026-10-17 |
-| bab20b54-4b95-4b19-acc0-1af49fe2e6cd | 🔵 discovery | Four lucide icons flagged as unused across Crescendo codebase | 2026-10-17 |
-| b0b209c0-80d5-4bf3-84e5-164081892244 | 🟣 feature | Crescendo project entering finalization pass for dashboard polish and documentation | 2026-10-17 |
-| f4ce7e8c-fa9d-401e-b7db-246bdcd8f2f7 | 🟣 feature | Saturday countdown timer added to dashboard with error guards | 2026-10-17 |
-| 69eeb941-2c7f-46bc-92ee-9c04f8299655 | ✅ change | Git status reveals multi-file frontend edit cycle | 2026-10-17 |
-| d4aa95be-8fa6-4807-8fab-a9f26ae940d0 | ✅ change | Major dashboard rewrite with neural training, countdown, and simulator features | 2026-10-17 |
-| c1dcb54f-e93b-422a-993e-f013958b0455 | ✅ change | Active feature development — dashboard rework and seed data added | 2026-10-17 |
-| e3f11817-deec-48dd-b692-45d80acf2a03 | 🔵 discovery | Crescendo homepage UI contains countdown, ball inspection, simulator, and chart sections | 2026-10-17 |
-| cb74f5c9-c598-4501-9b2b-864abf603fe0 | 🔵 discovery | Single-page SPA integrates TF.js LSTM, stats, countdown, and simulator | 2026-10-17 |
+| 322a7c50-becb-4645-9907-904af5926ce4 | ⚖️ decision | useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect) | 2026-10-17 |
+| b665873b-7000-4aad-abc7-88710107b73e | 🟣 feature | Perf : JS initial 2,4 Mo → 803 Ko — TF.js et Recharts chargés à la demande | 2026-10-17 |
+| db795caf-c2af-4af6-b64b-cba238d97047 | 🟣 feature | Bundle optimization: initial JS 2.4 MB → 803 KB via lazy TF.js and Recharts | 2026-10-17 |
+| e0859688-5319-4ccb-8d53-0d656e680852 | 🔴 bugfix | Lint returns to 0 errors: 10 problems all warnings, exit code 0 | 2026-10-17 |
+| 1557b56a-8537-4c06-9cb1-aa64345435fe | 🔵 discovery | All three pages import React hooks from 'react' at line 3 | 2026-10-17 |
+| 7dc3035f-8afd-4188-8fc2-3189bc2e6caf | 🔵 discovery | Lint regresses to 1 error: setState in effect for admin-key check at page.tsx:237 | 2026-10-17 |
+| 93e6e0e2-6f41-4c6d-8b8e-d30f338a9614 | ✅ change | page.tsx uses dynamic import('@/lib/model') for model builders and TF init | 2026-10-17 |
+| f08cca05-2564-4dfb-be86-b5bd622ed2bf | 🔵 discovery | Button utility classes use gradient fills with cubic-bezier easing | 2026-10-17 |
+| bca4814d-edb5-429a-8ec6-991c13d850ff | 🔵 discovery | globals.css defines a luxury theme with gold/cyan tokens and 3D ball classes | 2026-10-17 |
+| fd5e79cf-740a-4262-9d4a-aa25319fd1ad | 🔵 discovery | Loss chart renders recharts LineChart with a monotone cyan loss line over epochs | 2026-10-17 |
 
-**Key concepts:** impeccable-skill, design-detector, gradient-text, animate-bounce, agent-skills, UI-polish, bugfix, gotcha, chronological-order, data-convention
+**Key concepts:** react, useSyncExternalStore, localstorage, lint, set-state-in-effect, admin-key, performance, bundle-size, code-splitting, dynamic-import
+
+**Recent decisions:** useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect)
 
 ### src\app\api\crescendo/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 12cbcb06-a198-4af0-9fbb-eb0438524a92 | 🟣 feature | Scrape route hardened: rate limiting, deep-scrape auth, and fetch timeout | 2026-10-17 |
+| 6cf6ff7a-c353-4386-b0c4-50e992f61eab | ✅ change | Scrape route gains rate limiting and deep-scrape auth; multi-page loop still mutates results | 2026-10-17 |
+| 1f190ab4-4a3e-4990-8ac2-0e9051cd8724 | 🔵 discovery | Ten fetch call sites map the client/server boundary across pages and APIs | 2026-10-17 |
+| 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
+| 02d13ae5-29ea-417a-8fa3-acba73d511c3 | 🔵 discovery | Scrape route saves each page via saveDrawsToDB(results.reverse()) inside the loop | 2026-10-17 |
+| 3c28b062-4524-40c9-96b1-eab3662c8e03 | 🔵 discovery | Scrape route reverses scraped results before DB save; DB reads back ordered by id ASC | 2026-10-17 |
+| ecd8d1c0-8bac-472f-a411-7b580d0a1bd9 | 🔵 discovery | Scrape route reverses scraped results before DB save while db.ts reads id ASC | 2026-10-17 |
 | ac0899a7-5788-456d-aeff-19466b6d00f4 | 🔴 bugfix | Multi-page scrape only persists last page due to store overwrite | 2026-10-17 |
-| 84a03539-a8e8-4c98-951c-3e18419c7d86 | 🔵 discovery | Backend API surface exposes four route modules | 2026-10-17 |
-| 14b08364-b428-45a2-b73f-77b33f546a28 | 🔵 discovery | Crescendo project exposes a 4-endpoint API covering scrape, sync, DB reads, and cron | 2026-10-17 |
 
-**Key concepts:** how-it-works: Fetch page → collect into local array → reverse → replace single 'all_draws' blob with this page's set, why-it-exists: Rapid fetch to seed dashboard + sync endpoint with fresh draws before neural training begins; the `deep` flag extends reach backward, gotcha: Repeated full-store replacements naively discard earlier pages even though `allScraped` retains them locally during the loop, trade-off: Immediate persistence guarantees live dashboard updates mid-scrape at the cost of completeness; deferred full-merges restore correctness but add latency until the whole loop completes, how-it-works: Server-side fetch handlers centralizing scrape → SQLite → IndexedDB + Vercel Blob sync pipeline, why-it-exists: Backbone of Crescendo's backend; enables auto-refresh, model persistence, and cross-device data availability, pattern: Route-per-feature architecture matching Next.js App Router conventions for each data domain (draws, sync, scrape, cron), how-it-works, why-it-exists, pattern
+**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
 
 ### src\app\api\cron/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 80dcd576-004a-4081-8347-80b05298bcf7 | 🟣 feature | Wired Vercel Cron via new vercel.json (daily 19:30 UTC) and optional CRON_SECRET guard | 2026-10-17 |
-| 9ce1e5cd-ec14-47a5-a02c-49e8b837c3b2 | 🟣 feature | Cron endpoint triggers offline auto-sync to Vercel Blob only on new draws | 2026-10-17 |
-| 80e9d044-1337-41bb-9b15-2de8d8dda6f8 | 🟣 feature | Cron route triggers offline auto-sync to Vercel Blob only when new draws appear | 2026-10-17 |
-| 84a03539-a8e8-4c98-951c-3e18419c7d86 | 🔵 discovery | Backend API surface exposes four route modules | 2026-10-17 |
-| 14b08364-b428-45a2-b73f-77b33f546a28 | 🔵 discovery | Crescendo project exposes a 4-endpoint API covering scrape, sync, DB reads, and cron | 2026-10-17 |
+| 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 901cdade-c774-4f16-85fc-4fe5ceea3d5b | ✅ change | Cron route now uses fetchWithTimeout (45s) and keeps CRON_SECRET guard | 2026-10-17 |
+| 0cbc4284-ddb7-4ee7-a6ce-94423660d948 | 🔵 discovery | Cron route: CRON_SECRET guard, blob compare-by-length, fetch via VERGEL_URL fallback | 2026-10-17 |
+| 1f190ab4-4a3e-4990-8ac2-0e9051cd8724 | 🔵 discovery | Ten fetch call sites map the client/server boundary across pages and APIs | 2026-10-17 |
+| 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
+| 20246434-8f83-48d5-8fa1-da65b05cbbd5 | 🔵 discovery | Cron route guards via CRON_SECRET and updates blob only on new draws | 2026-10-17 |
+| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
+| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
+| 8f82ecfa-a992-4a71-867f-4fdcca9873ac | ✅ change | Finalization diffstat: 11 files, 675 insertions, 135 deletions, nothing staged | 2026-10-17 |
 
-**Key concepts:** Vercel, cron-schedule, vercel.json, CRON_SECRET, deployment, gotcha, how-it-works: Internal fetch → compare length → conditional save pattern for idempotent sync, why-it-exists: Background data synchronization so updates appear without user interaction; avoids duplicate cloud writes, gotcha: Length comparison instead of full-content comparison means partial updates may cause redundant cloud rewrites, trade-off: Minimalism of trivial file — avoids storing large diff payloads but risks unnecessary writes on malformed extractions
+**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
 
 ### src\app\api\draws/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 47a027e1-4712-49b0-90de-fdd4c2e87bb1 | 🔵 discovery | Draws API returns all SQLite rows in chronological order (oldest first) | 2026-10-17 |
-| 448b425d-5120-4b3f-aa97-7aed07f3706e | 🔵 discovery | Draws API returns all SQLite rows in chronological order (oldest first) | 2026-10-17 |
-| 301b26ae-482d-43b6-a847-3907dc415c36 | 🔴 bugfix | Fixed long-standing chronological ordering bug: processData reversed an already chronological array | 2026-10-17 |
-| 84a03539-a8e8-4c98-951c-3e18419c7d86 | 🔵 discovery | Backend API surface exposes four route modules | 2026-10-17 |
-| 14b08364-b428-45a2-b73f-77b33f546a28 | 🔵 discovery | Crescendo project exposes a 4-endpoint API covering scrape, sync, DB reads, and cron | 2026-10-17 |
+| fa59a99c-0a80-4816-a404-b27c653b8892 | 🔴 bugfix | Draws API reverses removed: returns SQLite rows chronological oldest-first | 2026-10-17 |
+| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
+| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
+| 8f82ecfa-a992-4a71-867f-4fdcca9873ac | ✅ change | Finalization diffstat: 11 files, 675 insertions, 135 deletions, nothing staged | 2026-10-17 |
+| 026aa481-85a4-43d1-8830-991d0b99bb83 | ✅ change | Diffstat: 11 files changed, 675 insertions, 135 deletions across the finalization pass | 2026-10-17 |
+| 6edfcfb1-8e8c-46ca-acaf-7d448a91811b | ✅ change | Git status shows full edit cycle: 11 modified files plus 6 untracked artifacts | 2026-10-17 |
+| 9fd7797b-4132-451c-9198-ab64b73960ff | 🔵 discovery | Revised draws API memory claims chronological order but facts/code still show reverse | 2026-10-17 |
+| 42795884-7d12-4867-97e2-9db4ba520aff | 🔵 discovery | Draws API observation revised, but sample code still shows .reverse() present | 2026-10-17 |
+| 90109844-47e5-46d9-954c-1901e044ca3d | 🔴 bugfix | Fixed chronological ordering bug: processData reversed an already chronological array | 2026-10-17 |
+| f95ac8ed-4f99-4e36-8cb6-b70cd55657f3 | ✅ change | Memory revised: Draws API still reverses results despite narrative claiming removal | 2026-10-17 |
 
-**Key concepts:** how-it-works, why-it-exists, pattern, trade-off, SQLite, dual-local-persistence, pagination, how-it-works: DB read → array reversal → JSON; single endpoint aggregates the full historical draw set, why-it-exists: Centralizes backend persistence access for the dashboard so no other module reaches better-sqlite3 directly — façade pattern, gotcha: Complete payload sent without pagination means mobile or limited clients can timeout on large databases; also, data-change-order of mutations is not guaranteed by this endpoint alone since writes go through saveDraws which appends
+**Key concepts:** bugfix, chronological-order, data-convention, draws-api, git-staging, finalization-pass, impeccable-skill, vendored-dependency, line-endings, git-index
 
 ### src\app\api\sync/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| a09b5b3b-bf8e-41e1-945e-2140f60b7269 | 🟣 feature | Sync POST hardened: admin-key auth, size limit, payload validation, 502 on blob failure | 2026-10-17 |
+| dea29d64-bde3-4479-a390-909e9955712f | 🔵 discovery | Sync route has read-fallback GET and unauthenticated overwrite POST | 2026-10-17 |
 | a9b1a56b-7b8f-4698-9a65-c985eca002bf | 🔵 discovery | Sync route implements read-with-fallback and overwrite-only write to Vercel Blob | 2026-10-17 |
 | c5baa4f7-2324-4533-9446-9541f356b068 | 🔵 discovery | Sync route implements read-fallback-write pattern for historical blobs | 2026-10-17 |
 | 84a03539-a8e8-4c98-951c-3e18419c7d86 | 🔵 discovery | Backend API surface exposes four route modules | 2026-10-17 |
 | 14b08364-b428-45a2-b73f-77b33f546a28 | 🔵 discovery | Crescendo project exposes a 4-endpoint API covering scrape, sync, DB reads, and cron | 2026-10-17 |
 
-**Key concepts:** how-it-works: Two-method CRUD over Vercel Blob with typed key resolution and dual-file fallback chain, why-it-exists: Cloud persistence layer enabling cross-device access and pre-update state capture; fallback names preserve legacy format compatibility, gotcha: Unconditional overwrite on POST bypasses idempotency guarantees that apply elsewhere — race conditions between client save and cloud push cause silent data loss, trade-off: Simple overwrite minimizes code but sacrifices data integrity under concurrency; cron route compensates by doing conditional check server-side, while this route relies on client discipline, how-it-works, why-it-exists, pattern, trade-off, Vercel, dual-local-persistence
+**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
 
 ### src\app\history/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 2f985cf6-8cca-4565-abec-a0b73da91427 | 🟣 feature | Installed impeccable design skill; detector findings fixed (gradient text ×3, bounce easing) | 2026-10-17 |
-| 301b26ae-482d-43b6-a847-3907dc415c36 | 🔴 bugfix | Fixed long-standing chronological ordering bug: processData reversed an already chronological array | 2026-10-17 |
-| 95afa297-fc82-426b-b458-002b5f9cb059 | 🔴 bugfix | History page exposes pagination conflicts between load-more and load-all | 2026-10-17 |
-| 3c729671-d6fe-4c31-aca6-70ec3c19cadf | 🔴 bugfix | Duplicate load-more UI blocks in history page inflate view count twice per interaction | 2026-10-17 |
-| b0b209c0-80d5-4bf3-84e5-164081892244 | 🟣 feature | Crescendo project entering finalization pass for dashboard polish and documentation | 2026-10-17 |
-| 3495cb94-bb87-40b0-9c9c-f4cef8d48d5f | 🔵 discovery | Requirements document establishes multi-phase AI application architecture | 2026-10-17 |
-| 037411bb-47d2-471d-b150-d83290086cfc | 🟣 feature | History page gains pagination and live statistics | 2026-10-17 |
-| d7f82bda-597b-41d9-ad96-686240df9529 | 🔴 bugfix | Shell command incompatibility persists with head truncation failure | 2026-10-17 |
-| 69eeb941-2c7f-46bc-92ee-9c04f8299655 | ✅ change | Git status reveals multi-file frontend edit cycle | 2026-10-17 |
-| d4aa95be-8fa6-4807-8fab-a9f26ae940d0 | ✅ change | Major dashboard rewrite with neural training, countdown, and simulator features | 2026-10-17 |
+| 1557b56a-8537-4c06-9cb1-aa64345435fe | 🔵 discovery | All three pages import React hooks from 'react' at line 3 | 2026-10-17 |
+| 1f190ab4-4a3e-4990-8ac2-0e9051cd8724 | 🔵 discovery | Ten fetch call sites map the client/server boundary across pages and APIs | 2026-10-17 |
+| 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
+| b15b6f6b-f106-49be-a474-580ca858bb2f | 🔵 discovery | Draw schedule constants: 6 hours 14–19h defined in page.tsx, referenced in copy and search | 2026-10-17 |
+| 847e7c33-e6a3-45f1-8c51-29d3d486de87 | 🔵 discovery | Six draw hours 14h–19h defined in page.tsx and referenced in history search | 2026-10-17 |
+| eabbe9cc-14b4-49d4-8441-b100a66b5a15 | 🔵 discovery | 27 French UI-string matches for "tirage" across journal, history, and dashboard pages | 2026-10-17 |
+| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
+| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
+| 8f82ecfa-a992-4a71-867f-4fdcca9873ac | ✅ change | Finalization diffstat: 11 files, 675 insertions, 135 deletions, nothing staged | 2026-10-17 |
+| 026aa481-85a4-43d1-8830-991d0b99bb83 | ✅ change | Diffstat: 11 files changed, 675 insertions, 135 deletions across the finalization pass | 2026-10-17 |
 
-**Key concepts:** impeccable-skill, design-detector, gradient-text, animate-bounce, agent-skills, UI-polish, bugfix, gotcha, chronological-order, data-convention
+**Key concepts:** react-hooks, client-component, code-convention, how-it-works, call-graph, client-server-boundary, security, api-sync, draw-schedule, duplication
 
 ### src\app\journal/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 2f985cf6-8cca-4565-abec-a0b73da91427 | 🟣 feature | Installed impeccable design skill; detector findings fixed (gradient text ×3, bounce easing) | 2026-10-17 |
+| 1557b56a-8537-4c06-9cb1-aa64345435fe | 🔵 discovery | All three pages import React hooks from 'react' at line 3 | 2026-10-17 |
+| 119b095a-9751-4fd3-9cb6-27eddfd4ec94 | 🔵 discovery | model.ts is the shared type hub imported by five modules | 2026-10-17 |
+| bcb19a3e-24cd-4155-a3ba-1508389254e8 | 🔵 discovery | model.ts is the shared type hub imported by 5 modules across lib and app | 2026-10-17 |
+| 1f190ab4-4a3e-4990-8ac2-0e9051cd8724 | 🔵 discovery | Ten fetch call sites map the client/server boundary across pages and APIs | 2026-10-17 |
+| 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
+| eabbe9cc-14b4-49d4-8441-b100a66b5a15 | 🔵 discovery | 27 French UI-string matches for "tirage" across journal, history, and dashboard pages | 2026-10-17 |
+| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
+| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
+| 8f82ecfa-a992-4a71-867f-4fdcca9873ac | ✅ change | Finalization diffstat: 11 files, 675 insertions, 135 deletions, nothing staged | 2026-10-17 |
+| 026aa481-85a4-43d1-8830-991d0b99bb83 | ✅ change | Diffstat: 11 files changed, 675 insertions, 135 deletions across the finalization pass | 2026-10-17 |
 
-**Key concepts:** impeccable-skill, design-detector, gradient-text, animate-bounce, agent-skills, UI-polish
+**Key concepts:** react-hooks, client-component, code-convention, type-hub, single-source-of-truth, coupling, data-shape, how-it-works, call-graph, client-server-boundary
+
+### src\components/
+| ID | Type | Title | Date |
+|----|------|-------|------|
+| b665873b-7000-4aad-abc7-88710107b73e | 🟣 feature | Perf : JS initial 2,4 Mo → 803 Ko — TF.js et Recharts chargés à la demande | 2026-10-17 |
+| db795caf-c2af-4af6-b64b-cba238d97047 | 🟣 feature | Bundle optimization: initial JS 2.4 MB → 803 KB via lazy TF.js and Recharts | 2026-10-17 |
+
+**Key concepts:** performance, bundle-size, code-splitting, dynamic-import, tensorflow-js, recharts, pipeline, tree-shaking, tensorflowjs
 
 ### src\lib/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 61a51d88-04b2-4ab8-a851-42f59cbc95c4 | 🔵 discovery | Statistical engine computes per-number delay and Poisson rebound from drawn history | 2026-10-17 |
-| d64e25fb-b7d6-4a2c-97bc-f40f43746952 | 🔵 discovery | TF.js LSTM pipeline exposes central data normalization entry | 2026-10-17 |
-| c95ba48a-9f3b-4517-b91b-d691775c4ae2 | 🔴 bugfix | Chronological ordering hardened at the DB layer with shared parseDrawDate (real data was NOT ordered) | 2026-10-17 |
-| 0692713d-bbb8-4a44-b83f-c42b685bf954 | 🔵 discovery | Model pipeline transforms processed draws into scaled sliding windows and trains 2-layer BiLSTM classifier | 2026-10-17 |
-| 1f2a7e56-861a-4ec4-af33-a8e0f09c2ca5 | 🔵 discovery | TensorFlow LSTM pipeline hydrates raw Crescendo draws into numerical training features | 2026-10-17 |
-| 50f02590-c146-4637-b4d6-286d6cb2487c | 🔵 discovery | SQLite layer uses INSERT OR IGNORE to prevent duplicate draws from accumulating | 2026-10-17 |
-| 69c7f26d-629e-48f3-8a81-2e31665467c7 | ✅ change | Seed dataset moved to public/seed-draws.json and auto-seeds empty SQLite DB on boot | 2026-10-17 |
-| 301b26ae-482d-43b6-a847-3907dc415c36 | 🔴 bugfix | Fixed long-standing chronological ordering bug: processData reversed an already chronological array | 2026-10-17 |
-| 699cd9ed-2226-4378-adbd-3a1134667379 | 🔵 discovery | `processData` is the central data transformation entry point | 2026-10-17 |
-| f7ab2209-edec-46f3-a410-8ac42221491d | 🟣 feature | IndexedDB stores persist draws, predictions, last-active grids, and LSTM model locally | 2026-10-17 |
+| 322a7c50-becb-4645-9907-904af5926ce4 | ⚖️ decision | useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect) | 2026-10-17 |
+| b665873b-7000-4aad-abc7-88710107b73e | 🟣 feature | Perf : JS initial 2,4 Mo → 803 Ko — TF.js et Recharts chargés à la demande | 2026-10-17 |
+| 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| db795caf-c2af-4af6-b64b-cba238d97047 | 🟣 feature | Bundle optimization: initial JS 2.4 MB → 803 KB via lazy TF.js and Recharts | 2026-10-17 |
+| 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
+| f5df4a70-7ed6-4468-afbd-1e37095612b8 | ✅ change | Lint warnings reduced to 117, still 0 errors | 2026-10-17 |
+| 64e4b4aa-93c5-4270-b41b-d022faa97671 | 🟣 feature | auth.ts implements optional SYNC_SECRET admin key via constant-time x-sync-key check | 2026-10-17 |
+| 2a8b22be-fdc9-4ecc-8113-1ce43323af7f | 🟣 feature | auth.ts adds timing-safe optional admin-key check via SYNC_SECRET | 2026-10-17 |
+| a5ab6cad-8cc3-40e7-b38b-92f7a78a4cac | 🟣 feature | validate.ts adds strict payload validators for draws, predictions, and model sync kinds | 2026-10-17 |
+| e0859688-5319-4ccb-8d53-0d656e680852 | 🔴 bugfix | Lint returns to 0 errors: 10 problems all warnings, exit code 0 | 2026-10-17 |
 
-**Key concepts:** how-it-works, why-it-exists, pattern, trade-off, Crescendo game, heatmap-statistic, risk-assessment, how-it-works: LotoDraw[]→ reverse → per-element statistical feature expansion then chunk into sliding windows for `createDataset`, why-it-exists: Single point of truth normalizes raw format output to model-ready tensors enabling feature engineering constants rather than raw integer scattering, gotcha: reversing early enforces chronological ordering for sequential window stepping, but re-running processData recomputes LAST seen map values silently — window alignment dependent on stable historical sequence; mixed forward/reverse content inflates distances unexpectedly
+**Key concepts:** react, useSyncExternalStore, localstorage, lint, set-state-in-effect, admin-key, performance, bundle-size, code-splitting, dynamic-import
+
+**Recent decisions:** useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect)
 
 💡 *Use `mem-find` to search full details. Use `mem-create` to save important decisions.*
 <!-- /open-mem-context -->

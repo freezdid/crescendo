@@ -1,5 +1,5 @@
-import { ProcessedDraw } from './model';
-import * as tf from '@tensorflow/tfjs';
+import { ProcessedDraw } from './pipeline';
+import type * as tfType from '@tensorflow/tfjs';
 
 const DB_NAME = 'CrescendoIAVisionDB';
 const DB_VERSION = 2; // Incremented for predictions store
@@ -88,20 +88,24 @@ export async function loadLastPrediction(): Promise<number[][] | null> {
 // Model persistence using TensorFlow.js built-in IndexedDB support
 const MODEL_PATH = `indexeddb://${DB_NAME}-model`;
 
-export async function saveModel(model: tf.LayersModel) {
+export async function saveModel(model: tfType.LayersModel) {
+  // Ensure the tfjs IO handlers (indexeddb://) are registered before saving
+  await import('@tensorflow/tfjs');
   await model.save(MODEL_PATH);
 }
 
-export async function loadModel(): Promise<tf.LayersModel | null> {
+export async function loadModel(): Promise<tfType.LayersModel | null> {
   try {
+    const tf = await import('@tensorflow/tfjs');
     const model = await tf.loadLayersModel(MODEL_PATH);
     return model;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
 export async function hasSavedModel(): Promise<boolean> {
+  const tf = await import('@tensorflow/tfjs');
   const models = await tf.io.listModels();
   return !!models[MODEL_PATH];
 }
@@ -110,6 +114,7 @@ export async function hasSavedModel(): Promise<boolean> {
 export async function exportModel() {
   if (!(await hasSavedModel())) return null;
   // This is tricky in browser. We'll use a virtual IO handler to get the data.
+  const tf = await import('@tensorflow/tfjs');
   let modelData: any = {};
   await (await loadModel())?.save(tf.io.withSaveHandler(async (artifacts) => {
     modelData = artifacts;
@@ -119,7 +124,52 @@ export async function exportModel() {
 }
 
 export async function importModel(artifacts: any) {
+  const tf = await import('@tensorflow/tfjs');
   const model = await tf.loadLayersModel(tf.io.fromMemory(artifacts));
   await saveModel(model);
   return model;
+}
+
+// ---------------------------------------------------------------------------
+// Admin key (cloud write protection).
+// Stored in localStorage; sent as `x-sync-key` on every write request.
+// The server enforces it only when SYNC_SECRET is configured.
+// ---------------------------------------------------------------------------
+export const ADMIN_KEY_STORAGE = 'crescendo_admin_key';
+const ADMIN_KEY_EVENT = 'crescendo-admin-key-change';
+
+export function getAdminKey(): string {
+  if (typeof window === 'undefined') return '';
+  return window.localStorage.getItem(ADMIN_KEY_STORAGE) || '';
+}
+
+export function setAdminKey(key: string) {
+  if (typeof window === 'undefined') return;
+  if (key) window.localStorage.setItem(ADMIN_KEY_STORAGE, key);
+  else window.localStorage.removeItem(ADMIN_KEY_STORAGE);
+  window.dispatchEvent(new Event(ADMIN_KEY_EVENT));
+}
+
+// useSyncExternalStore bindings so components can react to key changes
+// without a setState-in-effect (and across browser tabs via 'storage').
+export function subscribeAdminKey(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  window.addEventListener(ADMIN_KEY_EVENT, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(ADMIN_KEY_EVENT, callback);
+  };
+}
+
+export function getAdminKeySnapshot(): boolean {
+  return !!getAdminKey();
+}
+
+export function getSyncHeaders(json = false): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const key = getAdminKey();
+  if (key) headers['x-sync-key'] = key;
+  if (json) headers['Content-Type'] = 'application/json';
+  return headers;
 }

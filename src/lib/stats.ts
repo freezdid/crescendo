@@ -1,4 +1,4 @@
-import { ProcessedDraw, LotoDraw } from './model';
+import { ProcessedDraw, LotoDraw } from './pipeline';
 
 export const SAMEDI_LETTERS = ['S', 'A', 'M', 'E', 'D', 'I'] as const;
 export type SamediLetter = typeof SAMEDI_LETTERS[number];

@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { saveDrawsToDB, getAllDrawsFromDB } from '@/lib/db';
+import { fetchWithTimeout } from '@/lib/net';
+import { isWriteAuthorized, unauthorizedResponse } from '@/lib/auth';
+import { checkRateLimit, clientIp, tooManyRequestsResponse } from '@/lib/ratelimit';
 
 async function scrapePage(url: string) {
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     },
     cache: 'no-store'
-  });
+  }, 20000);
 
   if (!res.ok) return { results: [], prevUrl: null };
 
@@ -58,6 +61,18 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const deep = searchParams.get('deep') === 'true';
+
+    // Rate limiting (deep rebuilds are much heavier, stricter limit)
+    const ip = clientIp(req);
+    const limited = checkRateLimit(
+      `scrape:${deep ? 'deep' : 'shallow'}:${ip}`,
+      deep ? 3 : 12,
+      deep ? 5 * 60_000 : 60_000
+    );
+    if (!limited.allowed) return tooManyRequestsResponse(limited.retryAfterSec);
+
+    // Deep history rebuild is privileged once SYNC_SECRET is configured
+    if (deep && !isWriteAuthorized(req)) return unauthorizedResponse();
     
     let currentUrl = "https://www.secretsdujeu.com/crescendo/resultat";
     const visited = new Set<string>();

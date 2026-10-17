@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { saveToBlob, loadFromBlob } from '@/lib/blob';
+import { fetchWithTimeout } from '@/lib/net';
 
 // Simplified automated update for the Cron trigger
-async function fetchLatestDraws() {
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/crescendo`, { cache: 'no-store' });
+async function fetchLatestDraws(origin: string) {
+  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : origin;
+  const res = await fetchWithTimeout(`${baseUrl}/api/crescendo`, { cache: 'no-store' }, 45000);
   return await res.json();
 }
 
@@ -19,8 +20,9 @@ export async function GET(req: Request) {
 
     console.log("Démarrage du Cron Crescendo Quantum...");
     
-    // 1. Fetch latest draws via API
-    const scrapeRes = await fetchLatestDraws();
+    // 1. Fetch latest draws via API (self-referencing the incoming request origin
+    //    so it works on any deployment URL as well as localhost with a custom port)
+    const scrapeRes = await fetchLatestDraws(new URL(req.url).origin);
     if (!scrapeRes.success) throw new Error("Échec de la récupération des tirages");
     
     // 2. Load current Cloud Data

@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { LotoDraw } from './model';
+import { LotoDraw } from './pipeline';
 import { parseDrawDate } from './dates';
 
 const isVercel = process.env.VERCEL === '1';

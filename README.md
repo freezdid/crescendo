@@ -90,6 +90,17 @@ L'application sera accessible sur `http://localhost:3000`
 
 ```env
 BLOB_READ_WRITE_TOKEN=<votre-token-vercel-blob>
+
+# Recommandé : clé admin protégeant les écritures cloud (/api/sync)
+# et le scan approfondi (/api/crescendo?deep=true).
+# À saisir une fois dans l'app via le bouton « Clé » du header.
+SYNC_SECRET=<une-longue-chaine-aleatoire>
+
+# Recommandé : protège l'endpoint /api/cron (Vercel l'envoie automatiquement)
+CRON_SECRET=<une-autre-longue-chaine-aleatoire>
+
+# Sans SYNC_SECRET, les écritures cloud restent ouvertes (pratique en local) ;
+# dès qu'il est défini sur Vercel, l'en-tête x-sync-key devient obligatoire.
 ```
 
 ## 📐 Architecture
@@ -104,15 +115,23 @@ src/
 │   ├── journal/page.tsx      # Journal des gains
 │   └── api/
 │       ├── crescendo/route.ts  # Scraping des résultats officiels
-│       ├── draws/route.ts      # API des tirages (SQLite)
-│       ├── sync/route.ts       # Synchronisation cloud
+│       ├── draws/route.ts      # API des tirages (SQLite, tri chronologique)
+│       ├── sync/route.ts       # Synchronisation cloud (écritures protégées)
 │       └── cron/route.ts       # Cron de mise à jour automatique
+├── components/
+│   └── LossChart.tsx         # Courbe de convergence (chargée à la demande)
 ├── lib/
-│   ├── model.ts              # Architecture LSTM + StandardScaler + Training
+│   ├── pipeline.ts           # Logique pure (processData, dataset, scaler)
+│   ├── model.ts              # Réseau LSTM + backtest (TF.js, chargé à la demande)
+│   ├── dates.ts              # Parseur de dates françaises partagé
 │   ├── stats.ts              # Moteur statistique (Poisson, co-occurrences, GTO)
-│   ├── storage.ts            # Persistence IndexedDB + Model save/load
+│   ├── storage.ts            # Persistance IndexedDB + clé admin
 │   ├── db.ts                 # SQLite serveur (better-sqlite3)
-│   └── blob.ts               # Vercel Blob helper
+│   ├── blob.ts               # Vercel Blob helper
+│   ├── auth.ts               # Vérification de la clé admin (x-sync-key)
+│   ├── ratelimit.ts          # Limiteur de requêtes en mémoire
+│   ├── validate.ts           # Validation des écritures cloud
+│   └── net.ts                # fetch() avec timeout
 ```
 
 ## 🧪 Utilisation

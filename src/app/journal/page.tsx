@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, Brain, AlertCircle, Sparkles, RefreshCw, Award, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { loadDraws, loadPredictions, savePredictions, SavedPrediction } from '@/lib/storage';
-import { ProcessedDraw } from '@/lib/model';
+import { ProcessedDraw } from '@/lib/pipeline';
 import { NUM_TO_LETTER, extractNumbersAndLetter } from '@/lib/stats';
 
 export default function JournalPage() {
