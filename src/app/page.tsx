@@ -92,6 +92,7 @@ export default function Home() {
   const [stats, setStats] = useState<ComprehensiveStats | null>(null);
   const [isScraping, setIsScraping] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
+  const [trainError, setTrainError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentEpoch, setCurrentEpoch] = useState(0);
   const [totalEpochs, setTotalEpochs] = useState(50);
@@ -327,11 +328,12 @@ export default function Home() {
 
   const handleTrainModel = async () => {
     if (data.length === 0) {
-      console.warn('No data available for training');
+      setTrainError("Aucun tirage chargé — lancez d'abord une synchronisation.");
       return;
     }
     
     setIsTraining(true);
+    setTrainError(null);
     setShowTrainingMonitor(true);
     setLossHistory([]);
     setProgress(0);
@@ -428,6 +430,7 @@ export default function Home() {
       await handleGenerateCombinations();
     } catch (e) {
       console.error("Training error:", e);
+      setTrainError(e instanceof Error ? e.message : "Erreur inconnue pendant l'entraînement.");
     } finally {
       if (xs) xs.dispose();
       if (ys) ys.dispose();
@@ -902,6 +905,20 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* Training Error Banner */}
+          {trainError && (
+            <div
+              role="alert"
+              className="flex items-start gap-2.5 text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3.5 py-2.5"
+            >
+              <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>
+                <span className="font-bold">Échec de l&apos;entraînement :</span> {trainError}
+                <span className="text-rose-300/70"> — rechargez la page si le problème persiste.</span>
+              </span>
+            </div>
+          )}
 
           {/* Backtest Results if available */}
           {backtestStats && (

@@ -11,18 +11,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### ./
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
+| 8edffb8c-65bc-4a53-b004-72d53b119157 | 🟣 feature | Security pipeline successfully persisted as memory (id 215d2cb3), importance forced to 1 | 2026-10-17 |
 | 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 7a511223-1d39-4181-a8b9-8b273df6215e | 🔵 discovery | README documents stack and architecture: Next.js 16, TF.js LSTM, Obsidian Glass theme | 2026-10-17 |
 | c7bcfdc9-ab6a-4c75-aa8a-1220f05944c2 | 🔵 discovery | README documents environment variables with BLOB_READ_WRITE_TOKEN | 2026-10-17 |
 | a88fe3e0-f53d-49c8-8d86-2934b40f4452 | 🔴 bugfix | Commit dc67d7c fixes first Saturday draw to 13h (7 draws 13h-19h) | 2026-10-17 |
 | f2247f9b-b817-41d7-8964-a79eacae5dfa | 🔴 bugfix | Commit dc67d7c pushed: first Saturday draw corrected to 13h (7 draws 13h–19h) | 2026-10-17 |
-| 99de79fc-bdac-4ffd-809a-e8649dbb3569 | ✅ change | Small follow-up edits touch AGENTS.md, README.md, and page.tsx (10+/9-) | 2026-10-17 |
-| 709cea86-a625-41c0-8cd7-3aa3f5123028 | 🔵 discovery | README documents a real-time timer for the six Saturday draws (14h–19h) | 2026-10-17 |
-| 12b67e9c-781b-44a6-a85c-0af097f6486b | 🔵 discovery | README documents the 6 Saturday draws (14h–19h) real-time timer | 2026-10-17 |
-| d05d3149-7bb1-492c-ba30-6adaf9c84dd8 | ✅ change | Committed e55493f and pushed to origin/main: 77 files, 26857 insertions | 2026-10-17 |
 
-**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
+**Key concepts:** git-staging, security, performance, code-splitting, line-endings, git-diffstat, change-scope, git-status, working-tree, uncommitted-changes
 
 ### .agents\skills\impeccable/
 | ID | Type | Title | Date |
@@ -64,52 +64,50 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\app/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 322a7c50-becb-4645-9907-904af5926ce4 | ⚖️ decision | useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect) | 2026-10-17 |
-| b665873b-7000-4aad-abc7-88710107b73e | 🟣 feature | Perf : JS initial 2,4 Mo → 803 Ko — TF.js et Recharts chargés à la demande | 2026-10-17 |
-| db795caf-c2af-4af6-b64b-cba238d97047 | 🟣 feature | Bundle optimization: initial JS 2.4 MB → 803 KB via lazy TF.js and Recharts | 2026-10-17 |
-| e0859688-5319-4ccb-8d53-0d656e680852 | 🔴 bugfix | Lint returns to 0 errors: 10 problems all warnings, exit code 0 | 2026-10-17 |
-| 1557b56a-8537-4c06-9cb1-aa64345435fe | 🔵 discovery | All three pages import React hooks from 'react' at line 3 | 2026-10-17 |
-| 7dc3035f-8afd-4188-8fc2-3189bc2e6caf | 🔵 discovery | Lint regresses to 1 error: setState in effect for admin-key check at page.tsx:237 | 2026-10-17 |
-| 93e6e0e2-6f41-4c6d-8b8e-d30f338a9614 | ✅ change | page.tsx uses dynamic import('@/lib/model') for model builders and TF init | 2026-10-17 |
-| f08cca05-2564-4dfb-be86-b5bd622ed2bf | 🔵 discovery | Button utility classes use gradient fills with cubic-bezier easing | 2026-10-17 |
-| bca4814d-edb5-429a-8ec6-991c13d850ff | 🔵 discovery | globals.css defines a luxury theme with gold/cyan tokens and 3D ball classes | 2026-10-17 |
-| fd5e79cf-740a-4262-9d4a-aa25319fd1ad | 🔵 discovery | Loss chart renders recharts LineChart with a monotone cyan loss line over epochs | 2026-10-17 |
+| aa3be770-8237-480d-82d3-545b06cef6fa | 🔴 bugfix | Entraînement muet corrigé : setBackend('webgpu') résout même backend mort — validation par sonde + bannière d'erreur | 2026-10-17 |
+| eda6b4fd-e6d4-41a5-991a-86cd73dafc18 | ✅ change | Dashboard init now lazily imports TF init and uses fetchWithTimeout for cloud sync | 2026-10-17 |
+| 72ac582d-a6fd-48b0-bc23-110fdeb06c47 | 🔵 discovery | Training monitor UI: mode switcher, train/backtest/monitor controls, and a 4-metric HUD | 2026-10-17 |
+| 905c2d2b-ef8d-44b8-9531-b9a7120636fb | 🔵 discovery | trainingMode toggles between fast/precise, selecting model builder and TRAINING_CONFIG | 2026-10-17 |
+| 445cbe7a-6b8f-4945-a76f-5196f7953f14 | 🔵 discovery | isTraining state gates training button, monitor sections, and neuron animation across page.tsx | 2026-10-17 |
+| 4f36391f-227e-4ca8-8a93-71458b898143 | 🔵 discovery | Dashboard init ends with model restore and auto-scrape; handleTrainModel guards empty data | 2026-10-17 |
+| 2f5fb016-1274-4f5c-bc70-62eee24bf80f | ✅ change | handleTrainModel and handleGenerateCombinations now lazy-import TF.js and model builders | 2026-10-17 |
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
 
-**Key concepts:** react, useSyncExternalStore, localstorage, lint, set-state-in-effect, admin-key, performance, bundle-size, code-splitting, dynamic-import
-
-**Recent decisions:** useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect)
+**Key concepts:** tensorflow-js, webgpu, backend-fallback, silent-failure, cdp, brave-headless, error-surfacing, training, dynamic-import, fetch-timeout
 
 ### src\app\api\crescendo/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
+| 8edffb8c-65bc-4a53-b004-72d53b119157 | 🟣 feature | Security pipeline successfully persisted as memory (id 215d2cb3), importance forced to 1 | 2026-10-17 |
 | 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 12cbcb06-a198-4af0-9fbb-eb0438524a92 | 🟣 feature | Scrape route hardened: rate limiting, deep-scrape auth, and fetch timeout | 2026-10-17 |
 | 6cf6ff7a-c353-4386-b0c4-50e992f61eab | ✅ change | Scrape route gains rate limiting and deep-scrape auth; multi-page loop still mutates results | 2026-10-17 |
 | 1f190ab4-4a3e-4990-8ac2-0e9051cd8724 | 🔵 discovery | Ten fetch call sites map the client/server boundary across pages and APIs | 2026-10-17 |
 | 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
-| 02d13ae5-29ea-417a-8fa3-acba73d511c3 | 🔵 discovery | Scrape route saves each page via saveDrawsToDB(results.reverse()) inside the loop | 2026-10-17 |
-| 3c28b062-4524-40c9-96b1-eab3662c8e03 | 🔵 discovery | Scrape route reverses scraped results before DB save; DB reads back ordered by id ASC | 2026-10-17 |
-| ecd8d1c0-8bac-472f-a411-7b580d0a1bd9 | 🔵 discovery | Scrape route reverses scraped results before DB save while db.ts reads id ASC | 2026-10-17 |
-| ac0899a7-5788-456d-aeff-19466b6d00f4 | 🔴 bugfix | Multi-page scrape only persists last page due to store overwrite | 2026-10-17 |
 
-**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
+**Key concepts:** git-staging, security, performance, code-splitting, line-endings, git-diffstat, change-scope, git-status, working-tree, uncommitted-changes
 
 ### src\app\api\cron/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
+| 8edffb8c-65bc-4a53-b004-72d53b119157 | 🟣 feature | Security pipeline successfully persisted as memory (id 215d2cb3), importance forced to 1 | 2026-10-17 |
 | 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 901cdade-c774-4f16-85fc-4fe5ceea3d5b | ✅ change | Cron route now uses fetchWithTimeout (45s) and keeps CRON_SECRET guard | 2026-10-17 |
 | 0cbc4284-ddb7-4ee7-a6ce-94423660d948 | 🔵 discovery | Cron route: CRON_SECRET guard, blob compare-by-length, fetch via VERGEL_URL fallback | 2026-10-17 |
 | 1f190ab4-4a3e-4990-8ac2-0e9051cd8724 | 🔵 discovery | Ten fetch call sites map the client/server boundary across pages and APIs | 2026-10-17 |
 | 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
-| 20246434-8f83-48d5-8fa1-da65b05cbbd5 | 🔵 discovery | Cron route guards via CRON_SECRET and updates blob only on new draws | 2026-10-17 |
-| caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
-| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
-| 8f82ecfa-a992-4a71-867f-4fdcca9873ac | ✅ change | Finalization diffstat: 11 files, 675 insertions, 135 deletions, nothing staged | 2026-10-17 |
 
-**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
+**Key concepts:** git-staging, security, performance, code-splitting, line-endings, git-diffstat, change-scope, git-status, working-tree, uncommitted-changes
 
 ### src\app\api\draws/
 | ID | Type | Title | Date |
@@ -130,16 +128,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\app\api\sync/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
+| 8edffb8c-65bc-4a53-b004-72d53b119157 | 🟣 feature | Security pipeline successfully persisted as memory (id 215d2cb3), importance forced to 1 | 2026-10-17 |
 | 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
 | a09b5b3b-bf8e-41e1-945e-2140f60b7269 | 🟣 feature | Sync POST hardened: admin-key auth, size limit, payload validation, 502 on blob failure | 2026-10-17 |
 | dea29d64-bde3-4479-a390-909e9955712f | 🔵 discovery | Sync route has read-fallback GET and unauthenticated overwrite POST | 2026-10-17 |
 | a9b1a56b-7b8f-4698-9a65-c985eca002bf | 🔵 discovery | Sync route implements read-with-fallback and overwrite-only write to Vercel Blob | 2026-10-17 |
 | c5baa4f7-2324-4533-9446-9541f356b068 | 🔵 discovery | Sync route implements read-fallback-write pattern for historical blobs | 2026-10-17 |
-| 84a03539-a8e8-4c98-951c-3e18419c7d86 | 🔵 discovery | Backend API surface exposes four route modules | 2026-10-17 |
-| 14b08364-b428-45a2-b73f-77b33f546a28 | 🔵 discovery | Crescendo project exposes a 4-endpoint API covering scrape, sync, DB reads, and cron | 2026-10-17 |
 
-**Key concepts:** security, admin-key, rate-limiting, validation, csp-headers, sync-secret, cron-secret, api-sync, deep-scrape, gotcha
+**Key concepts:** git-staging, security, performance, code-splitting, line-endings, git-diffstat, change-scope, git-status, working-tree, uncommitted-changes
 
 ### src\app\history/
 | ID | Type | Title | Date |
@@ -160,6 +160,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\app\journal/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
 | 1557b56a-8537-4c06-9cb1-aa64345435fe | 🔵 discovery | All three pages import React hooks from 'react' at line 3 | 2026-10-17 |
 | 119b095a-9751-4fd3-9cb6-27eddfd4ec94 | 🔵 discovery | model.ts is the shared type hub imported by five modules | 2026-10-17 |
 | bcb19a3e-24cd-4155-a3ba-1508389254e8 | 🔵 discovery | model.ts is the shared type hub imported by 5 modules across lib and app | 2026-10-17 |
@@ -167,37 +170,37 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 0012b9ae-460c-4e33-af50-abbf8f49eddd | 🔵 discovery | 10 fetch call sites span blob, all three pages, and three API routes | 2026-10-17 |
 | eabbe9cc-14b4-49d4-8441-b100a66b5a15 | 🔵 discovery | 27 French UI-string matches for "tirage" across journal, history, and dashboard pages | 2026-10-17 |
 | caac3d03-8fd3-4477-975f-b1ae5c080028 | ✅ change | All finalization changes staged for commit: skill files, seed, dates.ts, vercel.json, core edits | 2026-10-17 |
-| a6b130ac-03d2-49ac-a001-30b92783562a | ✅ change | Full change set staged: new dates.ts, seed-draws.json, vercel.json, and impeccable skill | 2026-10-17 |
-| 8f82ecfa-a992-4a71-867f-4fdcca9873ac | ✅ change | Finalization diffstat: 11 files, 675 insertions, 135 deletions, nothing staged | 2026-10-17 |
-| 026aa481-85a4-43d1-8830-991d0b99bb83 | ✅ change | Diffstat: 11 files changed, 675 insertions, 135 deletions across the finalization pass | 2026-10-17 |
 
-**Key concepts:** react-hooks, client-component, code-convention, type-hub, single-source-of-truth, coupling, data-shape, how-it-works, call-graph, client-server-boundary
+**Key concepts:** git-staging, security, performance, code-splitting, line-endings, git-diffstat, change-scope, git-status, working-tree, uncommitted-changes
 
 ### src\components/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| 2e5ba1b8-42cb-4a7f-b6a2-abb28bc9b231 | 🟣 feature | Commit 8e97b75 pushed: secure cloud writes, rate-limit APIs, lazy-load TF.js/Recharts (-66% JS) | 2026-10-17 |
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| d218cc78-b15f-458b-a968-5590ca59b7ee | 🟣 feature | Performance finding persisted as memory (id b665873b), importance 1 | 2026-10-17 |
 | b665873b-7000-4aad-abc7-88710107b73e | 🟣 feature | Perf : JS initial 2,4 Mo → 803 Ko — TF.js et Recharts chargés à la demande | 2026-10-17 |
 | db795caf-c2af-4af6-b64b-cba238d97047 | 🟣 feature | Bundle optimization: initial JS 2.4 MB → 803 KB via lazy TF.js and Recharts | 2026-10-17 |
 
-**Key concepts:** performance, bundle-size, code-splitting, dynamic-import, tensorflow-js, recharts, pipeline, tree-shaking, tensorflowjs
+**Key concepts:** git-commit, security, performance, code-splitting, git-push, git-staging, line-endings, bundle-size, dynamic-import, recharts
 
 ### src\lib/
 | ID | Type | Title | Date |
 |----|------|-------|------|
-| 322a7c50-becb-4645-9907-904af5926ce4 | ⚖️ decision | useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect) | 2026-10-17 |
-| b665873b-7000-4aad-abc7-88710107b73e | 🟣 feature | Perf : JS initial 2,4 Mo → 803 Ko — TF.js et Recharts chargés à la demande | 2026-10-17 |
-| 215d2cb3-c1d4-4f96-bd6d-c6b05f34d75b | 🟣 feature | Sécurité : écritures cloud verrouillées par SYNC_SECRET (x-sync-key), rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
-| db795caf-c2af-4af6-b64b-cba238d97047 | 🟣 feature | Bundle optimization: initial JS 2.4 MB → 803 KB via lazy TF.js and Recharts | 2026-10-17 |
-| 60611318-d5a3-4623-a983-dcc35a4ca54c | 🟣 feature | Security pipeline locked down: SYNC_SECRET writes, rate-limit, validation, headers — 22/22 tests | 2026-10-17 |
-| f5df4a70-7ed6-4468-afbd-1e37095612b8 | ✅ change | Lint warnings reduced to 117, still 0 errors | 2026-10-17 |
-| 64e4b4aa-93c5-4270-b41b-d022faa97671 | 🟣 feature | auth.ts implements optional SYNC_SECRET admin key via constant-time x-sync-key check | 2026-10-17 |
-| 2a8b22be-fdc9-4ecc-8113-1ce43323af7f | 🟣 feature | auth.ts adds timing-safe optional admin-key check via SYNC_SECRET | 2026-10-17 |
-| a5ab6cad-8cc3-40e7-b38b-92f7a78a4cac | 🟣 feature | validate.ts adds strict payload validators for draws, predictions, and model sync kinds | 2026-10-17 |
-| e0859688-5319-4ccb-8d53-0d656e680852 | 🔴 bugfix | Lint returns to 0 errors: 10 problems all warnings, exit code 0 | 2026-10-17 |
+| aa3be770-8237-480d-82d3-545b06cef6fa | 🔴 bugfix | Entraînement muet corrigé : setBackend('webgpu') résout même backend mort — validation par sonde + bannière d'erreur | 2026-10-17 |
+| 3f8bfa83-3969-4bd3-8cf4-826a6fa9310c | 🔄 refactor | storage.ts removes static TF import: type-only tfType plus dynamic imports for model IO | 2026-10-17 |
+| 3388b629-38fa-4c59-a60c-8a064d626197 | 🔄 refactor | model.ts slimmed to 168 lines: only network builders, TF init, and backtest remain | 2026-10-17 |
+| 462b6cdd-499f-44a2-ae03-4f4e86729e3e | 🔄 refactor | pipeline.ts extracted: pure ML logic (types, processData, StandardScaler, createDataset) with no TF import | 2026-10-17 |
+| 2e5ba1b8-42cb-4a7f-b6a2-abb28bc9b231 | 🟣 feature | Commit 8e97b75 pushed: secure cloud writes, rate-limit APIs, lazy-load TF.js/Recharts (-66% JS) | 2026-10-17 |
+| de8c4ff3-273e-4b04-9242-9c0711ebcbd1 | ✅ change | Security/perf change set staged: new auth/net/pipeline/ratelimit/validate/LossChart modules | 2026-10-17 |
+| 9b7a5807-0a4b-4d87-9b05-83132f5a1931 | ✅ change | Security/perf diffstat: 13 files, 474 insertions, 370 deletions; model.ts shrinks 268 | 2026-10-17 |
+| 32de3d43-bfec-47f3-9d28-ee5d2848f48d | ✅ change | Security/perf working tree: 13 modified files plus 6 untracked new modules | 2026-10-17 |
+| 7542801a-a891-49b7-9cc5-1917da7a4aa2 | ⚖️ decision | useSyncExternalStore for admin-key state to satisfy react-hooks/set-state-in-effect | 2026-10-17 |
+| d218cc78-b15f-458b-a968-5590ca59b7ee | 🟣 feature | Performance finding persisted as memory (id b665873b), importance 1 | 2026-10-17 |
 
-**Key concepts:** react, useSyncExternalStore, localstorage, lint, set-state-in-effect, admin-key, performance, bundle-size, code-splitting, dynamic-import
+**Key concepts:** tensorflow-js, webgpu, backend-fallback, silent-failure, cdp, brave-headless, error-surfacing, training, refactor, type-only-import
 
-**Recent decisions:** useSyncExternalStore pour l'état clé admin (contourne react-hooks/set-state-in-effect)
+**Recent decisions:** useSyncExternalStore for admin-key state to satisfy react-hooks/set-state-in-effect
 
 💡 *Use `mem-find` to search full details. Use `mem-create` to save important decisions.*
 <!-- /open-mem-context -->

@@ -2,20 +2,35 @@ import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgpu';
 import { ProcessedDraw, createDataset } from './pipeline';
 
-// Initialize TensorFlow backend (WebGPU when available, WebGL fallback).
+// Initialize TensorFlow backend (WebGPU when available, WebGL then CPU fallback).
 // Returns the active backend name so callers can display it.
+//
+// tf.setBackend() can resolve even when the backend fails to initialize lazily
+// (notably WebGPU without a usable adapter): the failure only surfaces on the
+// first tensor operation, breaking every later call with
+// "The highest priority backend 'webgpu' has not yet been initialized".
+// Each candidate is therefore validated with a real op before being kept.
 export async function initTensorFlow(): Promise<string> {
-  await tf.ready();
-  if (tf.engine().backendName !== 'webgpu') {
+  const tryBackend = async (name: string) => {
+    await tf.setBackend(name);
+    await tf.ready();
+    const probe = tf.tensor1d([0]);
+    await probe.data();
+    probe.dispose();
+  };
+
+  for (const name of ['webgpu', 'webgl', 'cpu']) {
     try {
-      await tf.setBackend('webgpu');
-      console.log('Backend WebGPU activé');
+      await tryBackend(name);
+      const active = tf.getBackend()?.toUpperCase() || name.toUpperCase();
+      console.log(`Backend ${active} activé`);
+      return active;
     } catch {
-      console.warn('WebGPU non supporté, repli sur WebGL');
-      await tf.setBackend('webgl');
+      console.warn(`Backend ${name} indisponible, repli...`);
     }
   }
-  return tf.getBackend()?.toUpperCase() || 'CPU';
+
+  return 'CPU';
 }
 
 export function buildAdvancedModel(windowLength: number, numFeatures: number, numLabels: number) {
