@@ -1,95 +1,60 @@
-# 🎹 Crescendo IA Vision
+# 🎹 Crescendo Quantum IA
 
-![Crescendo IA Banner](https://img.shields.io/badge/AI-Neural_Network-blue?style=for-the-badge&logo=brain)
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+![AI Neural Network](https://img.shields.io/badge/AI-Neural_Network-blue?style=for-the-badge&logo=brain)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
 ![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-WebGPU-orange?style=for-the-badge&logo=tensorflow)
-![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss)
 
-> Une application de prédiction neuronale avancée pour le jeu Crescendo, propulsée par l'intelligence artificielle et l'accélération matérielle WebGPU.
-
----
-
-## 🌟 Caractéristiques
-
-- 🧠 **Modèle LSTM Bidirectionnel** : Analyse les séquences temporelles des tirages avec un mécanisme d'attention pour identifier les patterns subtils.
-- ⚡ **Accélération WebGPU** : Entraînement et prédictions ultra-rapides directement dans votre navigateur grâce à la puissance de votre carte graphique.
-- 📊 **Analyse Statistique Complète** : Calcul des fréquences, de la typicalité (somme, parité) et des écarts (dernière apparition).
-- 🔄 **Scraping Profond (2025-2026)** : Récupération récursive de tout l'historique depuis le lancement (Nov 2025).
-- 🔠 **Set de Lettres SAMEDI** : Support exclusif des lettres officielles du jeu (S, A, M, E, D, I).
-- 📱 **Interface Glassmorphism** : Un dashboard moderne, réactif et intuitif conçu pour une expérience utilisateur premium.
-- 📓 **Journal de Performance** : Suivi historique de la précision des prédictions de l'IA par rapport aux tirages réels.
+> Laboratoire quantique d'analyse probabiliste et prédictive avancée pour le jeu Crescendo (10 numéros parmi 25 + 1 lettre SAMEDI), propulsé par des réseaux neuronaux profonds et l'optimisation GTO.
 
 ---
 
-## 🚀 Installation Rapide
+## 🌟 Caractéristiques Principales
 
-### Prérequis
-- [Node.js](https://nodejs.org/) (v18 ou supérieur)
-- Une carte graphique compatible (pour WebGPU, sinon repli automatique sur WebGL)
-
-### Étapes
-1. **Cloner le projet**
-   ```bash
-   git clone https://github.com/freezdid/crescendo.git
-   cd crescendo
-   ```
-
-2. **Installer les dépendances**
-   ```bash
-   npm install
-   ```
-
-3. **Lancer l'application**
-   ```bash
-   npm run dev
-   ```
-   Rendez-vous sur [http://localhost:3000](http://localhost:3000)
+- 🧠 **Moteur Hybride Neuronal & GTO** : Combine un réseau de neurones profonds LSTM bidirectionnel avec mécanisme d'attention, filtrage de somme idéale (110-150) et parité équilibrée.
+- 🎯 **5 Stratégies de Génération Optimisées** :
+  1. **IA Hybride Suprême** : Fusion réseau neuronal + matrices de co-occurrences + contraintes mathématiques optimales.
+  2. **Surchauffe & Tendance** : Capture les séries et l'accélération récente des boules les plus fréquentes.
+  3. **Écarts & Réversion Poisson** : Détection des cycles en retard critique selon la loi de distribution de Poisson.
+  4. **Monte Carlo Quantique** : 10 000 tirages virtuels simulés par chaîne de Markov pour extraire la combinaison stochastique reine.
+  5. **Couverture Maximale Réduite** : Grilles complémentaires anti-redondance balayant l'ensemble des 25 numéros.
+- 🔮 **Matrice Interactive des 25 Numéros** : Vue 5x5 en temps réel des températures (chaud, tiède, froid, retard), des écarts actuels et des meilleurs partenaires de co-occurrence.
+- 🔠 **Radar des Lettres SAMEDI** : Calcul dynamique des probabilités de sortie pour les 6 lettres officielles (S, A, M, E, D, I).
+- ⚡ **Accélération Matérielle WebGPU / WebGL** : Entraînement et prédictions ultra-rapides directement dans le navigateur.
+- 🧪 **Simulateur & Diagnostic de Grille** : Testez n'importe quelle combinaison de 10 numéros et recevez un score d'équilibre /100 et une analyse des faiblesses.
+- 📓 **Journal & Audit des Gains** : Confrontation automatique des prédictions passées avec les tirages officiels suivants pour chiffrer les gains réels obtenus.
 
 ---
 
 ## 🛠️ Stack Technique
 
-- **Frontend** : Next.js 15 (App Router), Tailwind CSS, Framer Motion (Animations).
-- **Intelligence Artificielle** : TensorFlow.js avec backend WebGPU/WebGL.
-- **Base de Données** : SQLite (local/Vercel tmp) & IndexedDB (navigateur).
-- **Stockage Cloud** : Vercel Blob (pour la synchronisation des modèles).
-- **Scraping** : Cheerio & API Routes Next.js.
+- **Frontend** : Next.js 16 (App Router), React 19, Tailwind CSS v4, Framer Motion, Lucide Icons, Recharts.
+- **Moteur IA & Statistiques** : TensorFlow.js (Backends WebGPU / WebGL), loi de Poisson, matrices de co-occurrence 25x25.
+- **Persistance** : IndexedDB (côté client), SQLite & Vercel Blob (synchronisation cloud continue).
+- **Scraping Automatique** : API Cheerio avec pagination récursive et détection automatique des nouveaux tirages.
 
 ---
 
-## 📉 Fonctionnement de l'IA
+## 🚀 Installation & Démarrage
 
-L'IA utilise une architecture **Deep Learning** spécifique :
-1. **Prétraitement** : Les données brutes sont normalisées via un `StandardScaler` et enrichies de 36 caractéristiques techniques (fréquences, rolling stats, parité).
-2. **Fenêtrage** : Elle analyse les 12 derniers tirages (fenêtre glissante par défaut, configurable) pour prédire le suivant.
-3. **Architecture** : Deux couches LSTM bidirectionnelles suivies d'une couche d'attention pour pondérer l'importance de chaque tirage historique.
-4. **Optimisation** : Utilisation de l'algorithme Adam avec une perte MAE (Mean Absolute Error).
-5. **Post-processing** : Les prédictions sont castées sur l'ensemble [1-25] pour les numéros et [S, A, M, E, D, I] pour la lettre.
+```bash
+# Cloner le dépôt
+git clone https://github.com/freezdid/crescendo.git
+cd crescendo
 
----
+# Installer les dépendances
+npm install
 
-## 📁 Structure du Projet
-
-```text
-src/
-├── app/              # Routes et Pages (Next.js)
-│   ├── api/          # Endpoints (Scraping, Sync, DB)
-│   ├── history/      # Archives des tirages
-│   └── journal/      # Suivi des performances IA
-├── lib/              # Logique métier
-│   ├── model.ts      # Moteur IA (TensorFlow.js)
-│   ├── db.ts         # Gestion SQLite
-│   ├── stats.ts      # Calculs statistiques
-│   └── storage.ts    # Persistance navigateur
-└── components/       # Composants UI
+# Démarrer le serveur de développement
+npm run dev
 ```
+
+Rendez-vous sur [http://localhost:3000](http://localhost:3000).
 
 ---
 
 ## 📝 Licence
 
-Distribué sous licence MIT. Voir `LICENSE` pour plus d'informations.
+Distribué sous licence MIT.
 
----
-
-**Avertissement** : *Cette application est un outil d'analyse statistique basé sur des probabilités. Le jeu comporte des risques : endettement, isolement, dépendance. Pour être aidé, appelez le 09 74 75 13 13 (appel non surtaxé).*
+*Avertissement : Cette application est un outil d'analyse probabiliste et de modélisation mathématique. Le jeu comporte des risques : endettement, dépendance. Pour être aidé, appelez le 09 74 75 13 13 (appel non surtaxé).*

@@ -1,34 +1,58 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Database, Play, Sparkles, RefreshCw, ChevronRight, Trophy, Target, ListOrdered, Brain, History, Settings, Calendar } from 'lucide-react';
+import { 
+  Activity, Database, Play, Sparkles, RefreshCw, ChevronRight, Trophy, 
+  Target, ListOrdered, Brain, History, Settings, Calendar, Flame, 
+  Snowflake, Cpu, ShieldCheck, Copy, Check, Info, TrendingUp, BarChart3,
+  Layers, Zap, HelpCircle, CheckCircle2, AlertTriangle, ArrowUpRight
+} from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import * as tf from '@tensorflow/tfjs';
+import Link from 'next/link';
+
 import { 
   processData, 
   createDataset, 
   buildAdvancedModel, 
-  buildFastModel,
+  buildFastModel, 
   runBacktest, 
-  ProcessedDraw,
-  initTensorFlow,
-  TRAINING_CONFIG
-} from '../lib/model';
+  ProcessedDraw, 
+  initTensorFlow, 
+  TRAINING_CONFIG 
+} from '@/lib/model';
 
-import { calculateFrequencies, analyzeTypicality } from '../lib/stats';
-import { loadDraws, saveDraws, saveModel, loadModel, hasSavedModel, loadPredictions, savePredictions, SavedPrediction, exportModel, saveLastPrediction, loadLastPrediction } from '../lib/storage';
-import Link from 'next/link';
+import { 
+  calculateComprehensiveStats, 
+  generateSmartGrilles, 
+  analyzeGrille, 
+  ComprehensiveStats, 
+  GrilleAnalysis, 
+  StrategyType, 
+  STRATEGY_CONFIG, 
+  SAMEDI_LETTERS, 
+  runStrategyBacktest,
+  NUM_TO_LETTER,
+  LETTER_TO_NUM
+} from '@/lib/stats';
 
-const SAMEDI_LETTERS = ['S', 'A', 'M', 'E', 'D', 'I'];
-const getLetterFromNum = (num: number) => SAMEDI_LETTERS[(num - 1) % 6] || 'S';
-const getNumFromLetter = (char: string) => {
-  const idx = SAMEDI_LETTERS.indexOf(char.toUpperCase());
-  return idx === -1 ? 1 : idx + 1;
-};
+import { 
+  loadDraws, 
+  saveDraws, 
+  saveModel, 
+  loadModel, 
+  hasSavedModel, 
+  loadPredictions, 
+  savePredictions, 
+  SavedPrediction, 
+  saveLastPrediction, 
+  loadLastPrediction 
+} from '@/lib/storage';
 
 export default function Home() {
   const [data, setData] = useState<ProcessedDraw[]>([]);
+  const [stats, setStats] = useState<ComprehensiveStats | null>(null);
   const [isScraping, setIsScraping] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -37,114 +61,108 @@ export default function Home() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
+  // Strategy & Generation settings
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyType>('HYBRID_AI');
+  const [numGrids, setNumGrids] = useState<number>(3);
+  const [generatedGrilles, setGeneratedGrilles] = useState<GrilleAnalysis[]>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Neural training telemetry
   const [lossHistory, setLossHistory] = useState<{ epoch: number; loss: number }[]>([]);
   const [hasModel, setHasModel] = useState(false);
   const [modelReady, setModelReady] = useState(false);
-  const [isBacktesting, setIsBacktesting] = useState(false);
-  const [backtestStats, setBacktestStats] = useState<{ testSize: number, avgBonsNumeros: string, winRate: string } | null>(null);
-  const [windowLength, setWindowLength] = useState(12);
-  const [numPredictions, setNumPredictions] = useState(1);
-  const [predictions, setPredictions] = useState<number[][]>([]);
-  const [frequencies, setFrequencies] = useState<{ topNums: number[], topLetters: number[] } | null>(null);
-  const [predictionHistory, setPredictionHistory] = useState<SavedPrediction[]>([]);
-  const [simNumbers, setSimNumbers] = useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1]);
-  const [simResult, setSimResult] = useState<{ score: number, analysis: string } | null>(null);
-  const [isSyncingModel, setIsSyncingModel] = useState(false);
   const [trainingMode, setTrainingMode] = useState<'fast' | 'precise'>('precise');
-  const [backendName, setBackendName] = useState("Chargement...");
+  const [windowLength, setWindowLength] = useState(12);
+  const [backendName, setBackendName] = useState("Initialisation...");
 
+  // Backtest state
+  const [isBacktesting, setIsBacktesting] = useState(false);
+  const [backtestStats, setBacktestStats] = useState<any>(null);
 
-  // Keep references for tensorflow model and data
+  // Interactive 25-ball inspector
+  const [selectedBallForDetail, setSelectedBallForDetail] = useState<number | null>(null);
+
+  // Interactive Simulator
+  const [simSelectedNumbers, setSimSelectedNumbers] = useState<number[]>([3, 7, 10, 12, 14, 18, 19, 21, 22, 25]);
+  const [simSelectedLetter, setSimSelectedLetter] = useState<number>(3); // M
+
+  // References
   const tfModel = useRef<tf.LayersModel | null>(null);
-
   const scalerRef = useRef<any>(null);
   const lastTwelveRef = useRef<number[][] | null>(null);
 
-  // Load and Auto-Update on mount
+  // Simulator evaluation
+  const simAnalysis = useMemo(() => {
+    if (simSelectedNumbers.length !== 10) return null;
+    return analyzeGrille([...simSelectedNumbers, simSelectedLetter], stats || undefined);
+  }, [simSelectedNumbers, simSelectedLetter, stats]);
+
+  // Initial Load
   useEffect(() => {
     async function init() {
-      // 0. Init TensorFlow Backend (WebGPU/WebGL)
+      // 0. TensorFlow Backend
       await initTensorFlow();
       setBackendName(tf.getBackend().toUpperCase());
 
-      // 1. Load from cache first
-
+      // 1. Load Local Draws
       const savedDraws = await loadDraws();
       if (savedDraws && savedDraws.length > 0) {
         setData(savedDraws);
-        setFrequencies(calculateFrequencies(savedDraws));
+        const comprehensive = calculateComprehensiveStats(savedDraws);
+        setStats(comprehensive);
         updateModelReferences(savedDraws);
+
+        // Pre-generate initial predictions if none exist
+        const initial = generateSmartGrilles('HYBRID_AI', comprehensive, 3);
+        setGeneratedGrilles(initial);
       }
 
-      // 2. Sync with Cloud (Vercel Blob)
-      setSyncStatus("Syncing...");
+      // 2. Cloud Sync
+      setSyncStatus("Synchronisation...");
       try {
         const syncRes = await fetch('/api/sync', { cache: 'no-store' });
         const syncJson = await syncRes.json();
         if (syncJson.success && syncJson.data && syncJson.data.length > (savedDraws?.length || 0)) {
-          setData(syncJson.data);
-          await saveDraws(syncJson.data);
-          updateModelReferences(syncJson.data);
-          setSyncStatus("Cloud");
-        } else if (syncJson.success && (!syncJson.data || syncJson.data.length === 0) && savedDraws && savedDraws.length > 0) {
-          console.log("Cloud empty, forcing push of local draws...");
-          await fetch('/api/sync', {
-            method: 'POST',
-            body: JSON.stringify({ data: savedDraws, type: 'draws' })
-          });
-          setSyncStatus("Cloud (Migrated)");
+          const processed = processData(syncJson.data);
+          setData(processed);
+          await saveDraws(processed);
+          const computedStats = calculateComprehensiveStats(processed);
+          setStats(computedStats);
+          updateModelReferences(processed);
+          setSyncStatus("Cloud Actif");
         } else {
-          setSyncStatus("Cloud Synced");
+          setSyncStatus("Cloud Synchronisé");
         }
-      } catch (e) { 
-        console.error("Sync failed:", e);
-        setSyncStatus("Local Only");
+      } catch (e) {
+        console.warn("Cloud sync error, using local data:", e);
+        setSyncStatus("Mode Local");
       }
 
-      // 3. Load Predictions History
-      const savedPreds = await loadPredictions();
-      if (savedPreds) setPredictionHistory(savedPreds);
-      
+      // 3. Load Saved Predictions
       const lastActive = await loadLastPrediction();
-      if (lastActive) setPredictions(lastActive);
+      if (lastActive && lastActive.length > 0) {
+        // If we have saved active predictions, restore them
+        const analyzed = lastActive.map(g => analyzeGrille(g, stats || undefined));
+        setGeneratedGrilles(analyzed);
+      }
 
-      try {
-        const predSync = await fetch('/api/sync?type=predictions', { cache: 'no-store' });
-        const predJson = await predSync.json();
-        if (predJson.success && predJson.data && predJson.data.length > 0) {
-          setPredictionHistory(predJson.data);
-          await savePredictions(predJson.data);
-        } else if (predJson.success && (!predJson.data || predJson.data.length === 0) && savedPreds && savedPreds.length > 0) {
-          // Cloud predictions empty, push local
-          console.log("Cloud predictions empty, forcing push...");
-          await fetch('/api/sync', {
-            method: 'POST',
-            body: JSON.stringify({ data: savedPreds, type: 'predictions' })
-          });
-        }
-      } catch (e) { console.error("Pred sync failed:", e); }
-      
+      // 4. Model Check
       const exists = await hasSavedModel();
       setHasModel(exists);
       if (exists) {
         try {
           const model = await loadModel();
           if (model) {
-            // Vérifier la compatibilité des features (25 attendues)
-            const inputShape = model.inputs[0].shape;
-            if (inputShape[2] === 25) {
-              tfModel.current = model;
-              setModelReady(true);
-            } else {
-              console.warn("Modèle obsolète détecté (ancienne version), un nouveau sera créé.");
-              setHasModel(false);
-            }
+            tfModel.current = model;
+            setModelReady(true);
           }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+          console.error("Model load error:", e);
+        }
       }
 
-      // 3. Auto-update from server (Scraping)
-      await handleScrape();
+      // 5. Auto scrape latest
+      await handleScrape(false);
       setIsInitialLoading(false);
     }
 
@@ -152,6 +170,7 @@ export default function Home() {
   }, []);
 
   const updateModelReferences = (currentData: ProcessedDraw[], length: number = windowLength) => {
+    if (currentData.length < length + 2) return;
     const { scaler, lastTwelve } = createDataset(currentData, length);
     scalerRef.current = scaler;
     lastTwelveRef.current = lastTwelve;
@@ -159,80 +178,62 @@ export default function Home() {
 
   const handleScrape = async (deep: boolean = false) => {
     setIsScraping(true);
-    setScrapeStatus(deep ? "Récupération historique complet (2025-2026)..." : "Vérification nouveaux tirages...");
+    setScrapeStatus(deep ? "Scraping approfondi (2025-2026)..." : "Vérification des derniers tirages...");
     try {
       const res = await fetch(`/api/crescendo${deep ? '?deep=true' : ''}`);
       const json = await res.json();
-        if (json.success && json.results.length > 0) {
-          const processed = processData(json.results);
-          
-          // Check if we actually have NEW data compared to current state
-          const isNewData = processed.length > data.length;
-          
-          setData(processed);
-          setFrequencies(calculateFrequencies(processed));
-          await saveDraws(processed);
-          updateModelReferences(processed);
-        
-          if (!tfModel.current) {
-            tfModel.current = buildAdvancedModel(windowLength, 36, 11);
-            setModelReady(true);
-          }
-          setScrapeStatus(deep ? `Historique chargé (${json.pagesScraped} pages)` : (isNewData ? "Nouveaux tirages détectés !" : "Données à jour"));
+      if (json.success && json.results.length > 0) {
+        const processed = processData(json.results);
+        const isNew = processed.length > data.length;
 
-          // Push to Cloud
-          try {
-            await fetch('/api/sync', {
-              method: 'POST',
-              body: JSON.stringify({ data: processed })
-            });
-            setSyncStatus("Cloud Updated");
-          } catch (e) { console.error("Cloud push failed:", e); }
+        setData(processed);
+        const computedStats = calculateComprehensiveStats(processed);
+        setStats(computedStats);
+        await saveDraws(processed);
+        updateModelReferences(processed);
 
-          // AUTO-TRAIN if new data and not deep (deep is usually manual)
-          if (isNewData && data.length > 0 && !deep) {
-            console.log("Auto-training starting due to new data...");
-            handleTrain();
-          }
+        if (!tfModel.current) {
+          tfModel.current = buildAdvancedModel(windowLength, 36, 11);
+          setModelReady(true);
         }
 
+        setScrapeStatus(isNew ? `${processed.length - data.length} nouveau(x) tirage(s) synchronisé(s) !` : "Tirages à jour");
+
+        // Background Cloud Push
+        fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: processed, type: 'draws' })
+        }).catch(err => console.error("Sync push failed:", err));
+      }
     } catch (e) {
-      console.error(e);
-      setScrapeStatus("Erreur mise à jour");
+      console.error("Scrape error:", e);
+      setScrapeStatus("Données locales conservées");
     }
     setIsScraping(false);
-    setTimeout(() => setScrapeStatus(""), 4000);
+    setTimeout(() => setScrapeStatus(""), 4500);
   };
 
-  const handleTrain = async () => {
+  const handleTrainModel = async () => {
     if (data.length === 0) return;
     setIsTraining(true);
     setLossHistory([]);
     setProgress(0);
 
-    // Fine-tuning: check if model exists, if not create it
-    // OU si le mode d'entraînement a changé, ou si la taille de la fenêtre a changé
     let shouldBuild = !tfModel.current;
     if (tfModel.current) {
       const modelWindow = tfModel.current.inputs[0].shape[1];
-      const modelIsAdvanced = tfModel.current.layers.length > 5; // Simple check: Advanced has more layers
-      const wantAdvanced = trainingMode === 'precise';
-
-      if (modelWindow !== windowLength || modelIsAdvanced !== wantAdvanced) {
-        console.log(`Reconstruction du modèle : fenêtre ${modelWindow}->${windowLength}, mode ${modelIsAdvanced ? 'Elite' : 'Turbo'}->${wantAdvanced ? 'Elite' : 'Turbo'}`);
-        shouldBuild = true;
-      }
+      if (modelWindow !== windowLength) shouldBuild = true;
     }
 
     if (shouldBuild) {
-      tfModel.current = trainingMode === 'precise' 
-        ? buildAdvancedModel(windowLength, 36, 11) 
+      tfModel.current = trainingMode === 'precise'
+        ? buildAdvancedModel(windowLength, 36, 11)
         : buildFastModel(windowLength, 36, 11);
     }
 
     const { X, Y } = createDataset(data, windowLength);
     if (X.length === 0 || Y.length === 0) {
-      console.error("Dataset empty - cannot train");
       setIsTraining(false);
       return;
     }
@@ -242,664 +243,884 @@ export default function Home() {
     const ys = tf.tensor2d(Y);
     const epochs = config.epochs;
 
-    await tfModel.current!.fit(xs, ys, {
-      epochs,
-      batchSize: config.batchSize,
-      shuffle: true,
-      callbacks: {
-        onEpochEnd: (epoch, logs) => {
-          setProgress(Math.round(((epoch + 1) / epochs) * 100));
-          if (logs) setLossHistory(prev => [...prev, { epoch: epoch + 1, loss: logs.loss }]);
-        }
-      }
-    });
-
-    
-    await saveModel(tfModel.current!);
-    setHasModel(true);
-    
-    // Dispose tensors
-    xs.dispose();
-    ys.dispose();
-    
-    setIsTraining(false);
-
-    // Auto-predict and save after training
-    await handlePredict(true);
-  };
-
-
-  const handlePredict = async (autoSave: boolean = false) => {
-    if (!tfModel.current || !lastTwelveRef.current || !scalerRef.current) return;
-    setIsOptimizing(true);
-    
-    const candidates: { grille: number[], score: number }[] = [];
-    const scaler = scalerRef.current;
-    const means = scaler.means.slice(0, 11);
-    const stds = scaler.stds.slice(0, 11);
-    const modelWindow = tfModel.current.inputs[0].shape[1] as number;
-    
-    // Si la fenêtre du modèle est différente de la fenêtre actuelle, on recalcule le dernier segment
-    let inputData = lastTwelveRef.current;
-    if (modelWindow !== inputData.length) {
-      const { lastTwelve } = createDataset(data, modelWindow);
-      inputData = lastTwelve;
-    }
-
-    const currentWindow = inputData.length;
-
-    // Phase 1 : Générer un large pool de candidats (100+)
-    for (let p = 0; p < 150; p++) {
-      tf.tidy(() => {
-        const noise = tf.randomNormal([1, currentWindow, 36], 0, 0.01 + (p * 0.001));
-        const input = tf.add(tf.tensor3d([inputData]), noise);
-        const output = tfModel.current!.predict(input) as tf.Tensor;
-        const scaledPred = output.arraySync() as number[][];
-        
-        if (scaledPred && scaledPred[0]) {
-          // Introduction d'une variance aléatoire pour éviter que le modèle ne prédise toujours la moyenne (4, 7, 9, 12, 14, 17, 19, 21, 24, E)
-          let finalPred = scaledPred[0].map((val, i) => {
-            // Approximation d'une distribution normale (Box-Muller transform)
-            const u1 = Math.random();
-            const u2 = Math.random();
-            const z0 = Math.sqrt(-2.0 * Math.log(u1 === 0 ? 1e-10 : u1)) * Math.cos(2.0 * Math.PI * u2);
-            // Ajout du bruit proportionnel à la déviation standard
-            const valWithNoise = val + (z0 * 0.8); 
-            return Math.round((valWithNoise * stds[i]) + means[i]);
-          });
-
-          for(let i=0; i<10; i++) finalPred[i] = Math.max(1, Math.min(25, finalPred[i]));
-          finalPred[10] = Math.max(1, Math.min(6, finalPred[10])); // 1-6 (SAMEDI)
-          
-          let mainNums = Array.from(new Set(finalPred.slice(0, 10))).sort((a,b) => a-b);
-          while(mainNums.length < 10) {
-            const extra = Math.floor(Math.random() * 25) + 1;
-            if(!mainNums.includes(extra)) mainNums.push(extra);
+    try {
+      await tfModel.current!.fit(xs, ys, {
+        epochs,
+        batchSize: config.batchSize,
+        shuffle: true,
+        callbacks: {
+          onEpochEnd: (epoch, logs) => {
+            setProgress(Math.round(((epoch + 1) / epochs) * 100));
+            if (logs) setLossHistory(prev => [...prev, { epoch: epoch + 1, loss: Number(logs.loss.toFixed(4)) }]);
           }
-          const grille = [...mainNums.sort((a,b) => a-b), finalPred[10]];
-          
-          // Phase 2 : Scoring GTO (Game Theory Optimal)
-          let score = 0;
-          const stats = analyzeTypicality(grille);
-          if (stats.sumStatus === 'Optimal') score += 50;
-          if (stats.balanceStatus === 'Équilibré') score += 30;
-          
-          // Bonus si contient des numéros fréquents
-          if (frequencies) {
-            grille.slice(0,10).forEach(n => {
-              if (frequencies.topNums.includes(n)) score += 5;
-            });
-            if (frequencies.topLetters.includes(grille[10])) score += 10;
-          }
-          
-          candidates.push({ grille, score });
         }
       });
-      // Yield every 50 grilles for UI
-      if (p % 50 === 0) await tf.nextFrame();
+
+      await saveModel(tfModel.current!);
+      setHasModel(true);
+      setModelReady(true);
+    } catch (e) {
+      console.error("Training error:", e);
+    } finally {
+      xs.dispose();
+      ys.dispose();
+      setIsTraining(false);
     }
 
-    // Phase 3 : Sélection des meilleurs
-    const topGrilles = candidates
-      .sort((a, b) => b.score - a.score)
-      .slice(0, numPredictions)
-      .map(c => c.grille);
+    // Trigger high-grade generation post training
+    await handleGenerateCombinations();
+  };
 
-    setPredictions(topGrilles);
+  // Main Generation Handler combining Neural Network & Statistical Engine
+  const handleGenerateCombinations = async () => {
+    if (!stats) return;
+    setIsOptimizing(true);
+
+    let neuralCandidates: number[][] = [];
+
+    // If Neural Model is ready, sample candidate sequences
+    if (tfModel.current && lastTwelveRef.current && scalerRef.current) {
+      const scaler = scalerRef.current;
+      const means = scaler.means.slice(0, 11);
+      const stds = scaler.stds.slice(0, 11);
+      const inputData = lastTwelveRef.current;
+      const currentWindow = inputData.length;
+
+      for (let p = 0; p < 80; p++) {
+        tf.tidy(() => {
+          const noise = tf.randomNormal([1, currentWindow, 36], 0, 0.012 + (p * 0.001));
+          const input = tf.add(tf.tensor3d([inputData]), noise);
+          const output = tfModel.current!.predict(input) as tf.Tensor;
+          const scaledPred = output.arraySync() as number[][];
+
+          if (scaledPred && scaledPred[0]) {
+            const rawNums = scaledPred[0].map((val, i) => {
+              const u1 = Math.max(1e-10, Math.random());
+              const u2 = Math.random();
+              const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+              const valWithNoise = val + (z * 0.7);
+              return Math.round((valWithNoise * stds[i]) + means[i]);
+            });
+
+            // Clamp numbers 1-25 and letter 1-6
+            for (let i = 0; i < 10; i++) rawNums[i] = Math.max(1, Math.min(25, rawNums[i]));
+            rawNums[10] = Math.max(1, Math.min(6, rawNums[10]));
+
+            const unique = Array.from(new Set(rawNums.slice(0, 10))).sort((a, b) => a - b);
+            while (unique.length < 10) {
+              const r = Math.floor(Math.random() * 25) + 1;
+              if (!unique.includes(r)) unique.push(r);
+            }
+            neuralCandidates.push([...unique.sort((a, b) => a - b), rawNums[10]]);
+          }
+        });
+      }
+    }
+
+    // Generate through multi-strategy engine
+    const results = generateSmartGrilles(selectedStrategy, stats, numGrids, neuralCandidates);
+    setGeneratedGrilles(results);
     setIsOptimizing(false);
 
-    if (autoSave || topGrilles.length > 0) {
-      const newSaved: SavedPrediction = {
-        timestamp: new Date().toISOString(),
-        grilles: topGrilles
-      };
-      
-      // 1. Calculate new history
-      const updatedHistory = [newSaved, ...predictionHistory].slice(0, 50);
-      
-      // 2. State updates (immediate UI feedback)
-      setPredictions(topGrilles);
-      setPredictionHistory(updatedHistory);
-      
-      // 3. PERSISTENCE (Blocking and robust)
-      setSyncStatus("Saving...");
-      try {
-        // Save current active balls
-        await saveLastPrediction(topGrilles);
-        // Save history to local
-        await savePredictions(updatedHistory);
-        
-        // Set to Local Saved immediately so UI isn't blocked
-        setSyncStatus("Local Saved");
+    // Save to persistence
+    const rawGrilles = results.map(r => r.grille);
+    await saveLastPrediction(rawGrilles);
 
-        // Save to cloud (Background, non-blocking)
-        fetch(`/api/sync?type=predictions&t=${Date.now()}`, {
-          method: 'POST',
-          headers: { 'Cache-Control': 'no-cache' },
-          body: JSON.stringify({ data: updatedHistory, type: 'predictions' })
-        }).then(res => {
-          if (res.ok) setSyncStatus("Cloud Synced");
-          else setSyncStatus("Local Saved (Cloud Error)");
-        }).catch(e => {
-          console.error("Cloud push failed:", e);
-          setSyncStatus("Local Saved (Offline)");
-        });
-        
-      } catch (e) { 
-        console.error("Critical Save Error:", e);
-        setSyncStatus("Error Saving");
+    const savedPredObj: SavedPrediction = {
+      timestamp: new Date().toISOString(),
+      grilles: rawGrilles
+    };
+
+    const existingHistory = await loadPredictions() || [];
+    const updatedHistory = [savedPredObj, ...existingHistory].slice(0, 50);
+    await savePredictions(updatedHistory);
+
+    // Background push to Cloud
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: updatedHistory, type: 'predictions' })
+    }).catch(err => console.error("Cloud push failed:", err));
+  };
+
+  const handleCopyGrille = (analysis: GrilleAnalysis, index: number) => {
+    const text = `Grille Crescendo IA :\nNuméros : ${analysis.mainNumbers.join(' - ')}\nLettre : ${analysis.letterChar}\nScore IA : ${analysis.overallScore}/100 (Confiance ${analysis.confidenceRate}%)`;
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2500);
+  };
+
+  const handleRunBacktest = () => {
+    if (data.length < 40) return;
+    setIsBacktesting(true);
+    setTimeout(() => {
+      const res = runStrategyBacktest(selectedStrategy, data, 35);
+      setBacktestStats(res);
+      setIsBacktesting(false);
+    }, 400);
+  };
+
+  const toggleSimNumber = (num: number) => {
+    if (simSelectedNumbers.includes(num)) {
+      setSimSelectedNumbers(prev => prev.filter(n => n !== num));
+    } else {
+      if (simSelectedNumbers.length < 10) {
+        setSimSelectedNumbers(prev => [...prev, num].sort((a, b) => a - b));
       }
     }
   };
 
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(predictionHistory, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `crescendo_ia_predictions_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-  };
-
-  const handleSimulate = () => {
-    if (!data.length) return;
-    const { topNums, topLetters } = calculateFrequencies(data);
-    const stats = analyzeTypicality(simNumbers);
-    
-    // Simple scoring logic
-    let score = 0;
-    // 1. Frequencies
-    simNumbers.slice(0, 10).forEach(n => { if (topNums.includes(n)) score += 5; });
-    if (topLetters.includes(simNumbers[10])) score += 15;
-    
-    // 2. Typicality
-    if (stats.sumStatus === 'Optimal') score += 20;
-    if (stats.balanceStatus === 'Équilibré') score += 15;
-    
-    // 3. Spacing
-    const sorted = [...simNumbers.slice(0, 5)].sort((a, b) => a - b);
-    let gaps = 0;
-    for(let i=1; i<5; i++) gaps += (sorted[i] - sorted[i-1]);
-    if (gaps > 20 && gaps < 40) score += 20;
-
-    let analysis = "";
-    if (score > 60) analysis = "Excellente conformité aux patterns historiques.";
-    else if (score > 40) analysis = "Combinaison équilibrée, dans la moyenne.";
-    else analysis = "Cette grille s'éloigne des statistiques habituelles.";
-
-    setSimResult({ score, analysis });
-  };
-
-
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        if (Array.isArray(json)) {
-          setData(json);
-          await saveDraws(json);
-          updateModelReferences(json);
-          alert("Import réussi !");
-        }
-      } catch (e) { alert("Format invalide"); }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleBacktest = async () => {
-    if (data.length === 0) return;
-    setIsBacktesting(true);
-    setBacktestStats(null);
-    setProgress(0);
-    try {
-      const stats = await runBacktest(data, windowLength, 50, (p) => setProgress(p));
-      if (stats) setBacktestStats(stats);
-    } catch (e) { console.error(e); }
-    setIsBacktesting(false);
-  };
-
-
   return (
-    <main className="min-h-screen p-6 md:p-12 lg:p-16 flex flex-col gap-12 relative">
-      <AnimatePresence>
-        {isInitialLoading && (
-          <motion.div 
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center p-6 text-center"
-          >
-            <div className="relative mb-8">
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="w-24 h-24 rounded-full border-2 border-primary/20 border-t-primary shadow-[0_0_30px_rgba(0,85,164,0.2)]"
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Brain className="w-8 h-8 text-primary animate-pulse" />
+    <main className="min-h-screen text-slate-100 flex flex-col pb-24">
+      {/* Top Header & Quantum Telemetry */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#07080c]/90 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 p-0.5 shadow-lg shadow-amber-500/20 flex items-center justify-center">
+              <div className="w-full h-full bg-[#0b0e17] rounded-[0.875rem] flex items-center justify-center">
+                <Brain className="w-6 h-6 text-amber-400 animate-pulse" />
               </div>
             </div>
-            <h2 className="text-2xl font-black tracking-tighter mb-2">INITIALISATION <span className="text-primary">IA</span> VISION</h2>
-            <p className="text-slate-500 font-medium max-w-xs">{scrapeStatus || "Synchronisation des données en cours..."}</p>
-            <div className="mt-8 flex gap-1">
-               {[0,1,2].map(i => (
-                 <motion.div key={i} animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} className="w-1.5 h-1.5 rounded-full bg-primary" />
-               ))}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-xl tracking-tight text-white">CRESCENDO</span>
+                <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent font-black tracking-wider text-xl">QUANTUM</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  v2.5 Pro
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 hidden sm:block">Laboratoire d&apos;Analyse Probabiliste & Réseaux Neuronaux</p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
-      {/* Header Section */}
-      <header className="flex flex-col md:flex-row justify-between items-end gap-6">
-        <div className="space-y-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest"
-          >
-            <Brain className="w-3.5 h-3.5" />
-            <span>Neural Intelligence • {syncStatus} • {scrapeStatus || "Stable"}</span>
-          </motion.div>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
-            CRESCENDO <span className="text-primary italic">IA</span> VISION
-          </h1>
-          <p className="text-slate-400 max-w-xl text-lg font-medium leading-relaxed">
-            Exploitez la puissance des réseaux de neurones LSTM avec Fine-Tuning et stockage persistant.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-4">
-            <Link href="/journal" className="btn-ghost text-accent">
-              <History className="w-5 h-5" />
-              <span>Journal</span>
+          {/* Center Nav */}
+          <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-1">
+            <Link 
+              href="/" 
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/[0.08] text-white flex items-center gap-2 shadow-sm"
+            >
+              <Sparkles className="w-4 h-4 text-amber-400" /> Laboratoire
             </Link>
-            <Link href="/history" className="btn-ghost">
-              <Calendar className="w-5 h-5" />
-              <span>Historique</span>
+            <Link 
+              href="/history" 
+              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center gap-2"
+            >
+              <History className="w-4 h-4" /> Archives ({data.length})
             </Link>
+            <Link 
+              href="/journal" 
+              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all flex items-center gap-2"
+            >
+              <Trophy className="w-4 h-4" /> Journal des Gains
+            </Link>
+          </nav>
 
-            <button 
-                onClick={() => handleScrape(true)} 
-                disabled={isScraping}
-                className="btn-ghost text-primary"
-              >
-                <Database className={`w-5 h-5 ${isScraping ? 'animate-pulse' : ''}`} />
-                <span>Full Scraping 2025</span>
+          {/* Right Status Badges & Refresh */}
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2 bg-[#0d121e] border border-white/[0.08] px-3.5 py-1.5 rounded-xl text-xs font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-slate-400">Moteur:</span>
+              <span className="text-slate-200 font-semibold">{backendName}</span>
+            </div>
+
+            <button
+              onClick={() => handleScrape(false)}
+              disabled={isScraping}
+              className="btn-ghost-dark text-xs py-2 px-3 sm:px-4"
+              title="Actualiser les tirages"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isScraping ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Synchroniser</span>
             </button>
-            <button onClick={handleTrain} disabled={data.length === 0 || isTraining} className="btn-primary">
-              {isTraining ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-              <span>{hasModel ? "Fine-Tune" : "Entraîner"}</span>
-            </button>
+          </div>
         </div>
       </header>
 
-      {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col gap-8">
         
-        {/* Prediction Display */}
-        <motion.div className="md:col-span-4 glass-panel p-8 flex flex-col gap-8 relative group">
-          <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Sparkles className="w-24 h-24 text-primary" />
-          </div>
-          
-          <div className="z-10 flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
-                <Target className="w-6 h-6 text-primary" /> Vision Prédictive
-              </h2>
-              <p className="text-slate-400 font-medium">Algorithme basé sur {windowLength} tirages</p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase">Nombre de Visions</label>
-              <div className="flex items-center gap-3">
-                <input type="range" min="1" max="10" value={numPredictions} onChange={(e) => setNumPredictions(parseInt(e.target.value))} className="w-32 accent-primary" />
-                <span className="text-xl font-black text-primary">{numPredictions}</span>
+        {/* Banner Alert if Status Notification */}
+        <AnimatePresence>
+          {scrapeStatus && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="luxury-panel p-3.5 flex items-center justify-between border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm font-medium"
+            >
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>{scrapeStatus}</span>
               </div>
+              <span className="text-xs text-amber-400/80">{data.length} tirages en base locale</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* HERO GENERATOR COCKPIT */}
+        <section className="luxury-panel p-6 sm:p-8 relative overflow-hidden border-glow-gold/40">
+          <div className="absolute -right-20 -top-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col gap-6">
+            
+            {/* Headline */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-widest">
+                  <Zap className="w-3.5 h-3.5" />
+                  Générateur Quantique de Suites Gagnantes
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                  Numéros Optimaux du Jour
+                </h1>
+                <p className="text-slate-400 text-sm max-w-2xl">
+                  Calcul statistique multi-dimensionnel combinant la loi de Poisson, les fréquences d&apos;apparition, les écarts critiques et l&apos;architecture neuronale LSTM.
+                </p>
+              </div>
+
+              {/* Stats Summary Counter */}
+              <div className="flex items-center gap-3 bg-[#0c101a] border border-white/[0.08] px-4 py-2.5 rounded-2xl">
+                <div>
+                  <div className="text-[11px] uppercase font-bold text-slate-400">Base d&apos;Apprentissage</div>
+                  <div className="text-lg font-black text-white">{data.length} Tirages Réels</div>
+                </div>
+                <div className="h-8 w-px bg-white/10" />
+                <div>
+                  <div className="text-[11px] uppercase font-bold text-slate-400">Probabilité d&apos;Échantillon</div>
+                  <div className="text-lg font-black text-amber-400">40% / Tirage</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Strategy Selection Deck */}
+            <div className="space-y-2.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-amber-400" />
+                Sélectionnez la Stratégie Algorithmique
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {(Object.keys(STRATEGY_CONFIG) as StrategyType[]).map((strat) => {
+                  const item = STRATEGY_CONFIG[strat];
+                  const isSelected = selectedStrategy === strat;
+                  
+                  return (
+                    <button
+                      key={strat}
+                      onClick={() => setSelectedStrategy(strat)}
+                      className={`p-3.5 rounded-xl border text-left transition-all relative flex flex-col justify-between gap-2 ${
+                        isSelected 
+                          ? 'bg-amber-500/15 border-amber-500/60 shadow-lg shadow-amber-500/10' 
+                          : 'bg-white/[0.02] border-white/[0.07] hover:bg-white/[0.05] hover:border-white/[0.15]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          isSelected ? 'bg-amber-400 text-slate-950' : 'bg-white/10 text-slate-300'
+                        }`}>
+                          {item.badge}
+                        </span>
+                        {isSelected && <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />}
+                      </div>
+
+                      <div>
+                        <div className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                          {item.label}
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-snug mt-1 line-clamp-2">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Controls Row: Grid Count + Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-2 border-t border-white/[0.06]">
+              
+              {/* Number of grids */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Nombre de Grilles :
+                </span>
+                <div className="flex items-center gap-1.5 bg-black/30 p-1 rounded-xl border border-white/[0.08]">
+                  {[1, 3, 5, 10].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setNumGrids(n)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        numGrids === n
+                          ? 'bg-amber-500 text-slate-950 shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      {n} {n === 1 ? 'Grille' : 'Grilles'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleTrainModel}
+                  disabled={isTraining || isOptimizing || data.length === 0}
+                  className="btn-ghost-dark text-xs py-3 px-4 flex-1 sm:flex-none"
+                  title="Entraîne le réseau neuronal sur l'historique"
+                >
+                  <Brain className={`w-4 h-4 text-cyan-400 ${isTraining ? 'animate-bounce' : ''}`} />
+                  <span>{isTraining ? `Entraînement ${progress}%...` : 'Ré-entraîner IA'}</span>
+                </button>
+
+                <button
+                  onClick={handleGenerateCombinations}
+                  disabled={isOptimizing || isTraining}
+                  className="btn-gold flex-1 sm:flex-none text-sm py-3 px-6 shadow-xl"
+                >
+                  <Sparkles className={`w-4 h-4 text-slate-950 ${isOptimizing ? 'animate-spin' : ''}`} />
+                  <span>{isOptimizing ? 'Calcul Quantique...' : 'Générer les Grilles du Jour'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Progress Bar for Neural Training */}
+            {isTraining && (
+              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-white/10 mt-2">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-cyan-500 via-amber-400 to-amber-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ ease: "easeOut" }}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* RESULTS SECTION: GENERATED GRIDS */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-black tracking-tight text-white uppercase">
+                Combinaisons Recommandées
+              </h2>
+              <span className="bg-amber-500/20 text-amber-300 font-bold text-xs px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                {generatedGrilles.length} Prêtes à Jouer
+              </span>
+            </div>
+
+            <div className="text-xs text-slate-400">
+              Générées avec <span className="text-amber-400 font-semibold">{STRATEGY_CONFIG[selectedStrategy].label}</span>
             </div>
           </div>
 
-          <div className="z-10 space-y-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            <AnimatePresence mode="popLayout">
-              {predictions.length > 0 ? predictions.map((pred, pIdx) => {
-                const stats = analyzeTypicality(pred);
-                return (
-                  <motion.div 
-                    key={pIdx} 
-                    initial={{ opacity: 0, x: -20 }} 
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/40 border border-white/5"
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-black text-slate-500 w-6">#{pIdx + 1}</span>
-                      <div className="flex gap-2">
-                        {pred.map((num, i) => (
-                          <div key={i} className={`number-ball ${i === 10 ? 'chance' : ''}`}>
-                            {i === 10 ? getLetterFromNum(num) : num}
-                          </div>
-                        ))}
+          <div className="grid grid-cols-1 gap-4">
+            {generatedGrilles.map((analysis, idx) => {
+              const isCopied = copiedIndex === idx;
+
+              return (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="luxury-panel luxury-panel-interactive p-5 sm:p-6 flex flex-col gap-4 border-white/[0.08]"
+                >
+                  {/* Grid Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center font-black text-amber-400 text-sm">
+                        #{idx + 1}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-white text-base">Grille Gagnante Potentielle</span>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            Score IA : {analysis.overallScore}/100
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400">
+                          Indice de Confiance Mathématique : <strong className="text-amber-400">{analysis.confidenceRate}%</strong>
+                        </p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                       <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-tight ${stats.sumStatus === 'Optimal' ? 'bg-primary/20 text-white border border-primary/30' : 'bg-slate-800 text-slate-400'}`}>
-                         Somme {stats.sum} ({stats.sumStatus})
-                       </span>
-                       <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-tight ${stats.balanceStatus === 'Équilibré' ? 'bg-accent/20 text-white border border-accent/30' : 'bg-slate-800 text-slate-400'}`}>
-                         {stats.evens}P / {stats.odds}I ({stats.balanceStatus})
-                       </span>
+
+                    {/* Quick Copy Button */}
+                    <button
+                      onClick={() => handleCopyGrille(analysis, idx)}
+                      className={`btn-ghost-dark text-xs py-2 px-3 self-start sm:self-auto ${
+                        isCopied ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : ''
+                      }`}
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Copié dans le presse-papier</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Copier la Grille</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Balls Display: 10 Main Numbers + 1 Letter */}
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 py-1">
+                    {analysis.mainNumbers.map((num) => {
+                      const numStat = stats?.numberStats[num];
+                      const isHot = numStat?.temperature === 'hot';
+                      const isOverdue = numStat?.temperature === 'overdue';
+
+                      let ballClass = "ball-3d";
+                      if (isHot) ballClass = "ball-3d ball-3d-gold";
+                      else if (isOverdue) ballClass = "ball-3d ball-3d-emerald";
+
+                      return (
+                        <div key={num} className="flex flex-col items-center gap-1 group">
+                          <div className={ballClass} title={`Numéro ${num} (${numStat?.temperature || 'normal'})`}>
+                            {num}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                            {numStat ? `${numStat.currentDelay}j ret.` : ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Separator */}
+                    <div className="h-10 w-px bg-white/10 mx-1 hidden sm:block" />
+
+                    {/* Letter Badge */}
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="letter-badge-3d" title={`Lettre SAMEDI recommandée : ${analysis.letterChar}`}>
+                        {analysis.letterChar}
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
+                        Bonus
+                      </span>
                     </div>
-                  </motion.div>
-                );
-              }) : (
-                <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl opacity-20">
-                   <Target className="w-12 h-12 mb-4" />
-                   <p className="font-bold uppercase tracking-widest text-xs text-center px-4">Prêt pour l'analyse prédictive</p>
-                </div>
-              )}
-            </AnimatePresence>
+                  </div>
+
+                  {/* Mathematical GTO Breakdown Chips */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs">
+                    <div className="bg-white/[0.02] border border-white/[0.06] p-2.5 rounded-xl">
+                      <div className="text-slate-400 text-[11px]">Somme Totale</div>
+                      <div className="font-extrabold text-white text-sm flex items-center justify-between">
+                        <span>{analysis.sum}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                          analysis.sumStatus === 'Optimal' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'
+                        }`}>
+                          {analysis.sumStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/[0.02] border border-white/[0.06] p-2.5 rounded-xl">
+                      <div className="text-slate-400 text-[11px]">Parité (P / I)</div>
+                      <div className="font-extrabold text-white text-sm flex items-center justify-between">
+                        <span>{analysis.evens}P / {analysis.odds}I</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                          analysis.parityStatus === 'Équilibré' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                        }`}>
+                          {analysis.parityStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/[0.02] border border-white/[0.06] p-2.5 rounded-xl">
+                      <div className="text-slate-400 text-[11px]">Étalement (Bas / Hauts)</div>
+                      <div className="font-extrabold text-white text-sm flex items-center justify-between">
+                        <span>{analysis.lows}B / {analysis.highs}H</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                          analysis.lowHighStatus === 'Équilibré' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'
+                        }`}>
+                          {analysis.lowHighStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/[0.02] border border-white/[0.06] p-2.5 rounded-xl">
+                      <div className="text-slate-400 text-[11px]">Affinité Intra-Grille</div>
+                      <div className="font-extrabold text-white text-sm flex items-center justify-between">
+                        <span>{analysis.affinityScore}%</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-cyan-500/20 text-cyan-300">
+                          Co-occurrence
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Explanation / Reasoning Box */}
+                  <div className="bg-[#0b0e17] border border-white/[0.06] p-3 rounded-xl flex flex-col gap-1 text-xs">
+                    <div className="font-bold text-slate-300 flex items-center gap-1.5">
+                      <Info className="w-3.5 h-3.5 text-amber-400" />
+                      Justification Algorithmique :
+                    </div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+                      {analysis.explanations.map((exp, i) => (
+                        <li key={i}>{exp}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
+        </section>
 
-          <button onClick={() => handlePredict(false)} disabled={!modelReady || isTraining || isOptimizing} className="btn-accent w-full md:w-fit z-10 mt-auto">
-            {isOptimizing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ChevronRight className="w-5 h-5" />}
-            {isOptimizing ? "Optimisation GTO..." : "Lancer les Calculs"}
-          </button>
-        </motion.div>
-
-        {/* Configuration Card */}
-        <motion.div className="md:col-span-2 glass-panel p-6 flex flex-col gap-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-bold text-lg">Système & BDD</h3>
-              <p className="text-slate-400 text-sm">Gestion des données locales & cloud</p>
-            </div>
-            <Settings className="text-accent w-5 h-5" />
-          </div>
-          
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">Fenêtre Temporelle (Séquence LSTMs)</label>
-              <input 
-                type="range" 
-                min="4" 
-                max={data.length > 5 ? Math.min(150, data.length - 2) : 100} 
-                value={windowLength} 
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  setWindowLength(val);
-                  updateModelReferences(data, val);
-                }}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary" 
-              />
-              <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                <span>4 TIRAGES</span>
-                <span className="text-primary text-xs">{windowLength}</span>
-                <span>{data.length > 5 ? Math.min(150, data.length - 2) : 100} TIRAGES</span>
-              </div>
-              <p className="text-[9px] text-slate-500 italic">Nombre de tirages analysés en séquence. Le modèle utilise toujours tout l'historique disponible ({data.length} tirages) pour l'entraînement.</p>
-            </div>
-
-            <div className="space-y-3 pt-4 border-t border-slate-800/50">
-               <label className="text-xs font-bold text-slate-500 uppercase block">Persistance (Multi-Navigateur)</label>
-               <div className="grid grid-cols-2 gap-3">
-                 <button onClick={handleExport} className="btn-ghost !py-2 !text-xs !px-2">
-                    <Database className="w-3.5 h-3.5" /> Exporter JSON
-                 </button>
-                 <label className="btn-ghost !py-2 !text-xs !px-2 cursor-pointer">
-                    <History className="w-3.5 h-3.5" /> Importer
-                    <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                 </label>
-               </div>
-               <p className="text-[10px] text-slate-500 italic leading-tight">
-                 Utilisez l'export pour transférer vos données SQLite/IndexedDB vers un autre navigateur.
-               </p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/50 space-y-2">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Accélération Matérielle</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-accent">{backendName}</span>
-                <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-4 border-t border-slate-800/50">
-               <label className="text-xs font-bold text-slate-500 uppercase block">Mode d'Entraînement</label>
-               <div className="grid grid-cols-2 gap-2">
-                 {(['fast', 'precise'] as const).map(mode => (
-                   <button 
-                     key={mode}
-                     onClick={() => setTrainingMode(mode)}
-                     className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${
-                       trainingMode === mode 
-                        ? 'bg-primary text-white border-primary shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
-                        : 'bg-slate-900/50 text-slate-500 border-white/5 hover:border-white/10'
-                     }`}
-                   >
-                     {TRAINING_CONFIG[mode].label.split(' ')[0]}
-                   </button>
-                 ))}
-               </div>
-               <p className="text-[9px] text-slate-500 italic px-1">
-                 {TRAINING_CONFIG[trainingMode].desc} • {TRAINING_CONFIG[trainingMode].epochs} époques
-               </p>
-            </div>
-
-          </div>
-        </motion.div>
-
-        {/* Performance Chart */}
-        <motion.div className="md:col-span-3 glass-panel p-6 flex flex-col gap-6 relative overflow-hidden">
-          <div className="flex justify-between items-start z-10">
-            <div>
-              <h3 className="font-bold text-lg flex items-center gap-2"><Activity className="w-4 h-4 text-accent" /> Loss History</h3>
-              <p className="text-[10px] text-slate-500 uppercase font-black">Précision des neurones</p>
-            </div>
-            {isTraining && (
-               <span className="flex h-2 w-2 rounded-full bg-accent animate-ping" />
-            )}
-          </div>
-
-          <AnimatePresence>
-            {isTraining && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center gap-4 z-10"
-              >
-                <div className="flex justify-between w-full text-[10px] font-black uppercase">
-                  <span className="text-accent animate-pulse">Formation du Réseau Neuronal...</span>
-                  <span className="text-white">{progress}%</span>
-                </div>
-                
-                {/* Neural Grid Visualization */}
-                <div className="grid grid-cols-10 gap-1 p-2 bg-slate-900/80 rounded-xl border border-white/5">
-                  {Array.from({ length: 100 }).map((_, i) => {
-                    const isFilled = i < progress;
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={false}
-                        animate={{ 
-                          backgroundColor: isFilled ? 'var(--color-primary)' : 'rgba(255, 255, 255, 0.03)',
-                          scale: isFilled ? [1, 1.2, 1] : 1,
-                          boxShadow: isFilled ? '0 0 10px var(--color-primary)' : 'none'
-                        }}
-                        transition={{ duration: 0.3 }}
-                        className="w-3 h-3 md:w-4 md:h-4 rounded-sm"
-                      />
-                    );
-                  })}
-                </div>
-                
-                <p className="text-[9px] text-slate-500 italic text-center">
-                  Crystallisation des poids synaptiques ({lossHistory.length > 0 ? `Loss: ${lossHistory[lossHistory.length-1].loss.toFixed(6)}` : 'Initiation...'})
+        {/* 25-BALL INTERACTIVE MATRIX & HEATMAP */}
+        {stats && (
+          <section className="luxury-panel p-6 sm:p-8 flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-amber-500" />
+                  Matrice Statistique des 25 Numéros
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Cadence, écarts actuels et indices de rebond de Poisson calculés sur l&apos;ensemble des tirages.
                 </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="h-48 md:h-64 w-full min-h-[250px] min-w-full z-10 flex items-center justify-center">
-            {lossHistory.length > 0 ? (
-              <ResponsiveContainer width="99%" height="100%" minHeight={180}>
-                <LineChart data={lossHistory}>
-                   <Line type="monotone" dataKey="loss" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
-                   <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px' }} itemStyle={{ color: '#3b82f6' }} labelClassName="hidden" />
-                 </LineChart>
-               </ResponsiveContainer>
-            ) : (
-              <div className="text-slate-600 text-[10px] uppercase font-black">En attente de données d'entraînement...</div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Grid Simulator */}
-        <motion.div className="md:col-span-3 glass-panel p-6 flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <h3 className="font-bold text-lg flex items-center gap-2"><Target className="w-4 h-4 text-accent" /> Simulateur de Grille</h3>
-            {simResult && (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-slate-500">SCORE IA:</span>
-                <span className={`text-sm font-black ${simResult.score > 50 ? 'text-green-400' : 'text-loto-yellow'}`}>{simResult.score}%</span>
               </div>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-6 gap-2">
-            {[0,1,2,3,4,5,6,7,8,9,10].map(idx => (
-              <div key={idx} className="space-y-1">
-                <input 
-                  type={idx === 10 ? "text" : "number"}
-                  min="1" 
-                  max="25"
-                  value={idx === 10 ? getLetterFromNum(simNumbers[idx]) : simNumbers[idx]}
-                  onChange={(e) => {
-                    const next = [...simNumbers];
-                    if (idx === 10) {
-                      next[idx] = getNumFromLetter(e.target.value);
-                    } else {
-                      next[idx] = parseInt(e.target.value) || 1;
-                    }
-                    setSimNumbers(next);
-                  }}
-                  className={`w-full bg-slate-900/50 border ${idx === 10 ? 'border-loto-red/30 focus:border-loto-red' : 'border-white/10 focus:border-accent'} rounded-lg p-2 text-center text-sm font-bold outline-none transition-colors`}
-                />
-                <span className="block text-center text-[8px] font-black text-slate-600 uppercase">{idx === 10 ? 'Lettre' : `N°${idx+1}`}</span>
+
+              {/* Legend */}
+              <div className="flex flex-wrap items-center gap-3 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <span className="text-slate-300">Surchauffe</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="text-slate-300">Retard Critique</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-slate-400" />
+                  <span className="text-slate-300">Régulier</span>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
 
-          <button onClick={handleSimulate} className="btn-primary w-full py-2 text-xs">
-            Analyser la Combinaison
-          </button>
+            {/* 5x5 Board */}
+            <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 gap-3">
+              {Array.from({ length: 25 }, (_, i) => i + 1).map((num) => {
+                const s = stats.numberStats[num];
+                const isSelected = selectedBallForDetail === num;
+                const isHot = s?.temperature === 'hot';
+                const isOverdue = s?.temperature === 'overdue';
 
-          {simResult && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-center text-slate-400 italic">
-              "{simResult.analysis}"
-            </motion.p>
-          )}
-        </motion.div>
+                return (
+                  <button
+                    key={num}
+                    onClick={() => setSelectedBallForDetail(isSelected ? null : num)}
+                    className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
+                      isSelected 
+                        ? 'bg-amber-500/20 border-amber-400 shadow-lg shadow-amber-500/20' 
+                        : isHot 
+                          ? 'bg-amber-500/[0.08] border-amber-500/30 hover:border-amber-500/60' 
+                          : isOverdue 
+                            ? 'bg-emerald-500/[0.08] border-emerald-500/30 hover:border-emerald-500/60' 
+                            : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    <div className={isHot ? "ball-3d ball-3d-gold" : isOverdue ? "ball-3d ball-3d-emerald" : "ball-3d"}>
+                      {num}
+                    </div>
 
-        {/* Heatmap Card */}
-        <motion.div className="md:col-span-3 glass-panel p-6 flex flex-col gap-6">
-          <div className="flex items-center justify-between mb-4">
-             <h3 className="font-bold text-lg flex items-center gap-2"><ListOrdered className="w-4 h-4 text-loto-yellow" /> Chaleur des Numéros</h3>
-             <Link href="/journal" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-accent transition-colors">
-                <History className="w-4 h-4" />
-                Journal
-              </Link>
-          </div>
-          <p className="text-[10px] text-slate-500 uppercase font-black -mt-4">Les 10 numéros les plus fréquents</p>
-          <div className="flex flex-wrap gap-3">
-             {frequencies?.topNums.map((num, i) => (
-               <div key={i} className="flex flex-col items-center gap-1">
-                 <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary">
-                    {num}
-                 </div>
-                 <span className="text-[8px] font-bold text-slate-600">RANK {i+1}</span>
-               </div>
-             ))}
-          </div>
-          <div className="pt-4 border-t border-white/5">
-             <p className="text-[10px] text-slate-500 uppercase font-black mb-3">Lettres Favorites</p>
-             <div className="flex gap-4">
-                {frequencies?.topLetters.map((c, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-loto-yellow text-slate-900 flex items-center justify-center font-black text-xs shadow-lg">
-                    {getLetterFromNum(c)}
-                  </div>
-                ))}
-             </div>
-          </div>
-        </motion.div>
+                    <div className="space-y-0.5">
+                      <div className="text-[11px] font-bold text-white">
+                        {s?.frequency}% <span className="text-slate-400 font-normal">({s?.count})</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Écart : <strong className={isOverdue ? "text-emerald-400" : "text-slate-300"}>{s?.currentDelay} tir.</strong>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Quick Backtest */}
-        <motion.div className="md:col-span-3 glass-panel p-6 flex flex-col justify-between overflow-hidden relative">
-          <div className="space-y-4 z-10">
-            <h3 className="text-xl font-bold flex items-center gap-2"><Trophy className="w-6 h-6 text-yellow-500" /> Validation</h3>
-            
-            <AnimatePresence mode="wait">
-              {isBacktesting ? (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-4 py-4"
+            {/* Modal / Detail Drawer for selected ball */}
+            <AnimatePresence>
+              {selectedBallForDetail !== null && stats.numberStats[selectedBallForDetail] && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-[#0b0e17] border border-amber-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6"
                 >
-                  <div className="flex justify-between items-end mb-1">
-                    <span className="text-[10px] font-black text-primary uppercase">Calcul en cours...</span>
-                    <span className="text-xl font-black text-white">{progress}%</span>
+                  <div className="flex items-center gap-4">
+                    <div className="ball-3d ball-3d-gold w-14 h-14 text-xl">
+                      {selectedBallForDetail}
+                    </div>
+                    <div>
+                      <div className="text-lg font-black text-white flex items-center gap-2">
+                        Fiche Technique Numéro {selectedBallForDetail}
+                        <span className="text-xs px-2 py-0.5 rounded font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {stats.numberStats[selectedBallForDetail].temperature}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Présent dans {stats.numberStats[selectedBallForDetail].count} tirages sur {stats.totalDraws} ({stats.numberStats[selectedBallForDetail].frequency}%).
+                        Écart actuel : {stats.numberStats[selectedBallForDetail].currentDelay} tirages (Écart max historique : {stats.numberStats[selectedBallForDetail].maxDelay}).
+                      </p>
+                    </div>
                   </div>
-                  <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <motion.div 
-                      className="h-full bg-primary"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-500 italic">L'IA simule 50 tirages passés pour valider sa précision...</p>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }}
-                  className="grid grid-cols-3 gap-3"
-                >
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Win Rate</span>
-                    <span className="text-lg font-black text-primary">{backtestStats?.winRate || '0'}%</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Avg Numeros</span>
-                    <span className="text-lg font-black text-white">{backtestStats?.avgBonsNumeros || '0'}</span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-slate-900/80 border border-white/5 text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Sample</span>
-                    <span className="text-lg font-black text-white">{backtestStats?.testSize || '0'}</span>
+
+                  {/* Top Partners */}
+                  <div className="flex flex-col gap-1 text-xs">
+                    <span className="font-bold text-slate-300">Meilleurs Partenaires de Co-Occurrence :</span>
+                    <div className="flex items-center gap-2">
+                      {stats.numberStats[selectedBallForDetail].affinityPartners.map(p => (
+                        <div key={p.num} className="bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-center">
+                          <span className="font-black text-amber-400">{p.num}</span>
+                          <span className="text-[10px] text-slate-400 block">{p.score}%</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-          
-          <button onClick={handleBacktest} disabled={isBacktesting || data.length === 0} className="btn-ghost w-full mt-4 z-10 relative">
-            {isBacktesting ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-            {isBacktesting ? "Analyse..." : "Lancer Test de Précision"}
-          </button>
-        </motion.div>
+          </section>
+        )}
 
+        {/* LETTER SAMEDI QUANTUM RADAR */}
+        {stats && (
+          <section className="luxury-panel p-6 sm:p-8 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                  Probabilités des Lettres SAMEDI
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Évaluation probabiliste de chaque lettre bonus basée sur les fréquences historiques et cycles de retour.
+                </p>
+              </div>
+
+              <div className="text-xs text-amber-400 font-bold">
+                Recommandation n°1 : Lettre {stats.topLetters[0]?.letter} ({stats.topLetters[0]?.prob}%)
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {stats.topLetters.map((l, idx) => (
+                <div 
+                  key={l.letter} 
+                  className={`p-4 rounded-2xl border text-center flex flex-col items-center gap-2 transition-all ${
+                    idx === 0 
+                      ? 'bg-amber-500/15 border-amber-500/60 shadow-lg shadow-amber-500/10' 
+                      : 'bg-white/[0.02] border-white/[0.06]'
+                  }`}
+                >
+                  <div className="letter-badge-3d">
+                    {l.letter}
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <div className="text-base font-black text-white">
+                      {l.prob}% <span className="text-xs font-normal text-slate-400">prob.</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      Sortie : {l.frequency}% ({l.count})
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      Écart : <strong className="text-amber-400">{l.currentDelay} tirages</strong>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* INTERACTIVE GRID SIMULATOR & AUDITOR */}
+        <section className="luxury-panel p-6 sm:p-8 flex flex-col gap-6">
+          <div className="space-y-1">
+            <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+              Simulateur & Diagnostic de Vos Numéros
+            </h3>
+            <p className="text-xs text-slate-400">
+              Composez ou testez une suite de 10 numéros pour obtenir son indice de performance GTO immédiat.
+            </p>
+          </div>
+
+          {/* Interactive Picker 1-25 */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-bold">
+              <span>Numéros Sélectionnés : {simSelectedNumbers.length} / 10</span>
+              <button 
+                onClick={() => setSimSelectedNumbers([])}
+                className="text-amber-400 hover:underline"
+              >
+                Réinitialiser la sélection
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 25 }, (_, i) => i + 1).map((n) => {
+                const isSelected = simSelectedNumbers.includes(n);
+                return (
+                  <button
+                    key={n}
+                    onClick={() => toggleSimNumber(n)}
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl font-extrabold text-xs transition-all ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/30 scale-105'
+                        : 'bg-white/[0.04] border border-white/[0.08] text-slate-300 hover:bg-white/[0.1]'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Letter Picker */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold text-slate-400">Lettre SAMEDI :</span>
+            <div className="flex items-center gap-2">
+              {SAMEDI_LETTERS.map((char, idx) => (
+                <button
+                  key={char}
+                  onClick={() => setSimSelectedLetter(idx + 1)}
+                  className={`w-8 h-8 rounded-lg font-black text-xs transition-all ${
+                    simSelectedLetter === idx + 1
+                      ? 'bg-amber-400 text-slate-950 shadow-md'
+                      : 'bg-white/[0.04] text-slate-400 border border-white/[0.08] hover:text-white'
+                  }`}
+                >
+                  {char}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Simulator Diagnostic Card */}
+          {simAnalysis && (
+            <div className="bg-[#0b0e17] border border-white/[0.08] rounded-2xl p-5 flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl font-black text-amber-400">
+                    {simAnalysis.overallScore}/100
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-white text-sm">Score d&apos;Équilibre Probabiliste</div>
+                    <div className="text-xs text-slate-400">
+                      Confiance calculée : <strong className="text-emerald-400">{simAnalysis.confidenceRate}%</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className={`px-2 py-1 rounded font-bold ${
+                    simAnalysis.sumStatus === 'Optimal' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                  }`}>
+                    Somme : {simAnalysis.sum} ({simAnalysis.sumStatus})
+                  </span>
+                  <span className={`px-2 py-1 rounded font-bold ${
+                    simAnalysis.parityStatus === 'Équilibré' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'
+                  }`}>
+                    {simAnalysis.evens}P / {simAnalysis.odds}I
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-400">
+                <strong className="text-slate-300">Analyse de la combinaison :</strong>
+                <ul className="list-disc list-inside mt-1 space-y-0.5">
+                  {simAnalysis.explanations.map((exp, i) => (
+                    <li key={i}>{exp}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* NEURAL NETWORK TRAINING & BACKTEST TELEMETRY */}
+        <section className="luxury-panel p-6 sm:p-8 flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                <Activity className="w-5 h-5 text-cyan-400" />
+                Télémétrie Neuronale & Backtesting
+              </h3>
+              <p className="text-xs text-slate-400">
+                Supervisez la convergence du réseau de neurones LSTM et validez les taux de réussite sur les tirages récents.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRunBacktest}
+                disabled={isBacktesting || data.length < 30}
+                className="btn-ghost-dark text-xs py-2 px-4"
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
+                <span>{isBacktesting ? "Simulation en cours..." : "Lancer Backtest (35 tirages)"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Backtest Results Display */}
+          {backtestStats && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#0b0e17] border border-cyan-500/30 p-4 rounded-2xl">
+              <div>
+                <div className="text-[11px] text-slate-400 font-bold uppercase">Moyenne Bons Numéros</div>
+                <div className="text-xl font-black text-white">{backtestStats.avgHits} / 10</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-slate-400 font-bold uppercase">Taux de Réussite &ge; 6 Nums</div>
+                <div className="text-xl font-black text-emerald-400">{backtestStats.highWinRate}%</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-slate-400 font-bold uppercase">Correspondance Lettre</div>
+                <div className="text-xl font-black text-amber-400">{backtestStats.letterMatchRate}%</div>
+              </div>
+              <div>
+                <div className="text-[11px] text-slate-400 font-bold uppercase">Fréquence Gros Gains (&ge;8)</div>
+                <div className="text-xl font-black text-cyan-400">{backtestStats.jackpotCloseRate}%</div>
+              </div>
+            </div>
+          )}
+
+          {/* Loss Curve Chart */}
+          {lossHistory.length > 0 && (
+            <div className="h-56 w-full pt-4">
+              <div className="text-xs font-bold text-slate-400 mb-2">Courbe d&apos;Apprentissage (Perte MAE) :</div>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={lossHistory}>
+                  <XAxis dataKey="epoch" stroke="#64748b" fontSize={11} />
+                  <YAxis stroke="#64748b" fontSize={11} domain={['auto', 'auto']} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.75rem', fontSize: '12px' }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="loss" 
+                    stroke="#f59e0b" 
+                    strokeWidth={2.5} 
+                    dot={false} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
 
       </div>
-
-      <footer className="mt-auto py-8 text-center border-t border-slate-800/50">
-        <p className="text-slate-600 text-xs font-medium tracking-widest uppercase">
-          Propulsé par Antigravity Intelligence • © 2026
-        </p>
-      </footer>
     </main>
   );
 }
-
-
-

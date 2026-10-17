@@ -1,10 +1,9 @@
-import { put, list, del } from '@vercel/blob';
+import { put, list } from '@vercel/blob';
 
-const BLOB_PATH = 'loto_history.json';
+const DEFAULT_BLOB_PATH = 'crescendo_history.json';
 
-export async function saveToBlob(data: any, pathname: string) {
+export async function saveToBlob(data: any, pathname: string = DEFAULT_BLOB_PATH) {
   try {
-    // Save new data (put with addRandomSuffix: false overwrites existing pathname)
     const { url } = await put(pathname, JSON.stringify(data), {
       access: 'public',
       addRandomSuffix: false,
@@ -16,7 +15,7 @@ export async function saveToBlob(data: any, pathname: string) {
   }
 }
 
-export async function loadFromBlob(pathname: string) {
+export async function loadFromBlob(pathname: string = DEFAULT_BLOB_PATH) {
   try {
     const { blobs } = await list();
     const blob = blobs.find(b => b.pathname === pathname);

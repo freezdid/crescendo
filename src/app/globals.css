@@ -1,88 +1,254 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  --color-background: #07152b; /* Deep Navy Blue */
-  --color-foreground: #ffffff;
-  --color-primary: #ff6a00; /* Crescendo Orange */
-  --color-accent: #00b4d8; /* Crescendo Cyan */
-  --color-loto-yellow: #ff9d00; /* Secondary Orange */
-  --color-panel: #0d2346;
-  --color-card: #15325e;
+  --color-background: #08090d;
+  --color-foreground: #f8fafc;
   
-  --radius-3xl: 1.5rem;
+  --color-gold: #d4af37;
+  --color-gold-light: #f59e0b;
+  --color-gold-dark: #b48328;
+  
+  --color-cyan: #06b6d4;
+  --color-cyan-glow: #00d2ff;
+  
+  --color-emerald-live: #10b981;
+  --color-rose-alert: #f43f5e;
+  
+  --color-panel: #0e121c;
+  --color-panel-card: #131826;
+  --color-panel-elevated: #182033;
 }
 
 @layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: #07080c;
+    color: #f1f5f9;
     font-family: var(--font-sans);
     min-height: 100vh;
     background-image: 
-      radial-gradient(circle at 0% 0%, rgba(255, 106, 0, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(0, 180, 216, 0.05) 0%, transparent 50%);
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(212, 175, 55, 0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 90% 90%, rgba(6, 182, 212, 0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 10% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
     background-attachment: fixed;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-panel/40 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Luxury Obsidian Glass Panel */
+  .luxury-panel {
+    background: linear-gradient(135deg, rgba(17, 22, 35, 0.75) 0%, rgba(12, 16, 26, 0.85) 100%);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
+    box-shadow: 
+      0 10px 30px -10px rgba(0, 0, 0, 0.6),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.08);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .glass-panel:hover {
-    @apply border-white/10 bg-panel/60;
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+  .luxury-panel-interactive:hover {
+    border-color: rgba(212, 175, 55, 0.25);
+    box-shadow: 
+      0 20px 40px -15px rgba(0, 0, 0, 0.8),
+      0 0 20px -5px rgba(212, 175, 55, 0.12),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
   }
 
-  .btn-primary {
-    @apply flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-200;
-    @apply bg-primary text-white hover:scale-[1.02] active:scale-[0.98];
-    box-shadow: 0 4px 15px rgba(0, 85, 164, 0.3);
+  /* Glowing Accent Borders */
+  .border-glow-gold {
+    border-color: rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 20px -5px rgba(212, 175, 55, 0.25);
   }
 
-  .btn-accent {
-    @apply flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-200;
-    @apply bg-accent text-white hover:scale-[1.02] active:scale-[0.98];
-    box-shadow: 0 4px 15px rgba(0, 180, 216, 0.3);
+  .border-glow-cyan {
+    border-color: rgba(6, 182, 212, 0.4);
+    box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.25);
   }
 
-  .btn-ghost {
-    @apply flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all duration-200;
-    @apply bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 hover:text-white;
+  /* Luxury Gold Action Button */
+  .btn-gold {
+    background: linear-gradient(135deg, #f59e0b 0%, #d4af37 50%, #b48328 100%);
+    color: #0b0d13;
+    font-weight: 700;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1.5rem;
+    box-shadow: 
+      0 4px 20px -2px rgba(212, 175, 55, 0.4),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
 
-  .number-ball {
-    @apply flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full font-black text-lg md:text-xl;
-    @apply shadow-lg relative overflow-hidden transition-transform hover:scale-105;
-    background: radial-gradient(circle at 35% 35%, #ffffff, #e2e8f0);
-    color: var(--color-accent); /* Cyan text */
-    border: 3px solid var(--color-accent); /* Cyan border */
+  .btn-gold:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 
+      0 8px 25px -2px rgba(212, 175, 55, 0.6),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.6);
   }
 
-  .number-ball::after {
-    content: '';
-    @apply absolute inset-0 opacity-40;
-    background: linear-gradient(135deg, white 0%, transparent 40%);
+  .btn-gold:active {
+    transform: translateY(1px) scale(0.99);
   }
 
-  .number-ball.chance {
-    @apply text-white border-none;
-    background: radial-gradient(circle at 35% 35%, var(--color-primary), #d95a00);
-    box-shadow: 0 0 25px rgba(255, 106, 0, 0.4);
+  /* Cyan Tech Action Button */
+  .btn-cyan {
+    background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border-radius: 0.875rem;
+    padding: 0.75rem 1.5rem;
+    box-shadow: 
+      0 4px 20px -2px rgba(6, 182, 212, 0.35),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.3);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  .btn-cyan:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 8px 25px -2px rgba(6, 182, 212, 0.55);
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+
+  /* Subtle Ghost Button */
+  .btn-ghost-dark {
+    background: rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-slate-800 rounded-full;
+
+  .btn-ghost-dark:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  /* 3D Realistic Lottery Spheres */
+  .ball-3d {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+    position: relative;
+    user-select: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    /* Chrome / Metallic Platinum Sphere */
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #cbd5e1 45%, #64748b 80%, #334155 100%);
+    color: #0f172a;
+    box-shadow: 
+      0 6px 12px -2px rgba(0, 0, 0, 0.5),
+      inset 0 -4px 6px -1px rgba(15, 23, 42, 0.6),
+      inset 0 3px 5px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  .ball-3d:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 
+      0 10px 20px -3px rgba(0, 0, 0, 0.7),
+      inset 0 -4px 6px -1px rgba(15, 23, 42, 0.6),
+      inset 0 3px 6px 0 rgba(255, 255, 255, 1);
+  }
+
+  /* Golden 3D Sphere (Top Hot / Key Picks) */
+  .ball-3d-gold {
+    background: radial-gradient(circle at 35% 30%, #fffbeb 0%, #fcd34d 35%, #d97706 75%, #78350f 100%);
+    color: #451a03;
+    box-shadow: 
+      0 6px 14px -2px rgba(217, 119, 6, 0.4),
+      0 2px 6px 0 rgba(0, 0, 0, 0.4),
+      inset 0 -4px 6px -1px rgba(120, 53, 15, 0.7),
+      inset 0 3px 5px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  /* Cyan Quantum 3D Sphere (Neural Prediction) */
+  .ball-3d-cyan {
+    background: radial-gradient(circle at 35% 30%, #ecfeff 0%, #67e8f9 35%, #0284c7 75%, #082f49 100%);
+    color: #082f49;
+    box-shadow: 
+      0 6px 14px -2px rgba(6, 182, 212, 0.4),
+      0 2px 6px 0 rgba(0, 0, 0, 0.4),
+      inset 0 -4px 6px -1px rgba(8, 47, 73, 0.7),
+      inset 0 3px 5px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  /* Emerald Overdue 3D Sphere */
+  .ball-3d-emerald {
+    background: radial-gradient(circle at 35% 30%, #ecfdf5 0%, #6ee7b7 35%, #059669 75%, #064e3b 100%);
+    color: #064e3b;
+    box-shadow: 
+      0 6px 14px -2px rgba(16, 185, 129, 0.4),
+      0 2px 6px 0 rgba(0, 0, 0, 0.4),
+      inset 0 -4px 6px -1px rgba(6, 78, 59, 0.7),
+      inset 0 3px 5px 0 rgba(255, 255, 255, 0.85);
+  }
+
+  /* Faceted Royal Letter Badge (SAMEDI) */
+  .letter-badge-3d {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.25rem;
+    background: linear-gradient(135deg, #f59e0b 0%, #d4af37 60%, #92400e 100%);
+    color: #1e1302;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      0 8px 18px -2px rgba(212, 175, 55, 0.5),
+      inset 0 1px 2px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -2px 4px 0 rgba(0, 0, 0, 0.4);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .letter-badge-3d:hover {
+    transform: scale(1.1) rotate(2deg);
+    box-shadow: 0 12px 24px -2px rgba(212, 175, 55, 0.7);
+  }
+
+  /* Clean Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(10, 12, 18, 0.6);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.3);
   }
 }
