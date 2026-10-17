@@ -55,6 +55,16 @@ import {
 import { fetchWithTimeout } from '@/lib/net';
 
 // Pure helper: next Saturday draw countdowns (module-level so it is stable for hooks)
+// Static placeholders rendered on the server so the build-time HTML is
+// deterministic; real live values replace them right after hydration.
+const emptySubscribe = () => () => {};
+const PLACEHOLDER_COUNTDOWNS = ['13h00', '14h00', '15h00', '16h00', '17h00', '18h00', '19h00'].map((label, idx) => ({
+  hour: 13 + idx,
+  label,
+  diff: 0,
+  passed: false,
+}));
+
 function computeSaturdayCountdowns(now: Date) {
   const drawHours = [13, 14, 15, 16, 17, 18, 19];
   const drawLabels = ['13h00', '14h00', '15h00', '16h00', '17h00', '18h00', '19h00'];
@@ -133,6 +143,9 @@ export default function Home() {
   // Saturday Countdown Timer
   const [saturdayCountdowns, setSaturdayCountdowns] = useState<{hour: number; label: string; diff: number; passed: boolean}[]>(() => computeSaturdayCountdowns(new Date()));
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  // Server HTML renders deterministic placeholders; live clock/countdown values
+  // appear right after hydration (avoids React #418 text mismatches).
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   // References
   const tfModel = useRef<tfType.LayersModel | null>(null);
@@ -210,6 +223,7 @@ export default function Home() {
           body: JSON.stringify({ data: processed, type: 'draws' })
         }, 20000).then(pushRes => {
           if (pushRes.status === 401) setSyncStatus("Clé admin requise");
+          else if (pushRes.status === 502) setSyncStatus("Stockage cloud non configuré");
         }).catch(err => console.error("Sync push failed:", err));
       } else {
         setScrapeStatus("Réponse inattendue du service — données locales conservées");
@@ -360,6 +374,8 @@ export default function Home() {
         } catch {
           shouldBuild = true;
         }
+        // A restored model without an optimizer cannot be trained
+        if (!shouldBuild && !tfModel.current.optimizer) shouldBuild = true;
       }
 
       if (shouldBuild) {
@@ -508,6 +524,7 @@ export default function Home() {
       body: JSON.stringify({ data: updatedHistory, type: 'predictions' })
     }, 20000).then(pushRes => {
       if (pushRes.status === 401) setSyncStatus("Clé admin requise");
+      else if (pushRes.status === 502) setSyncStatus("Stockage cloud non configuré");
     }).catch(err => console.error("Cloud push failed:", err));
   };
 
@@ -1363,26 +1380,26 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs">
               <Calendar className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-slate-300 font-bold">
-                {currentTime.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                {isClient ? currentTime.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
               </span>
               <span className="text-white/20">•</span>
               <Clock className="w-3 h-3 text-amber-400" />
               <span className="text-amber-300 font-bold tabular-nums">
-                {currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                {isClient ? currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-            {saturdayCountdowns.map((draw) => {
+            {(isClient ? saturdayCountdowns : PLACEHOLDER_COUNTDOWNS).map((draw) => {
               const hours = Math.floor(draw.diff / (1000 * 60 * 60));
               const minutes = Math.floor((draw.diff % (1000 * 60 * 60)) / (1000 * 60));
               const seconds = Math.floor((draw.diff % (1000 * 60)) / 1000);
               const days = Math.floor(hours / 24);
               const remainingHours = hours % 24;
               
-              const isNext = !draw.passed && saturdayCountdowns.filter(d => !d.passed).indexOf(draw) === 0;
-              const isUrgent = !draw.passed && draw.diff < 3600000; // < 1h
+              const isNext = isClient && !draw.passed && saturdayCountdowns.filter(d => !d.passed).indexOf(draw) === 0;
+              const isUrgent = isClient && !draw.passed && draw.diff < 3600000; // < 1h
               
               return (
                 <motion.div
@@ -1409,7 +1426,9 @@ export default function Home() {
                   }`}>
                     {draw.label}
                   </div>
-                  {draw.passed ? (
+                  {!isClient ? (
+                    <div className="font-mono text-sm font-black tabular-nums text-slate-500">--:--:--</div>
+                  ) : draw.passed ? (
                     <div className="text-[10px] text-slate-500 font-bold uppercase">Terminé</div>
                   ) : (
                     <div className="font-mono text-sm font-black tabular-nums">
@@ -1433,7 +1452,7 @@ export default function Home() {
           <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
             <span>7 tirages chaque samedi de 13h à 19h • Résultats synchronisés automatiquement</span>
             <span className="text-emerald-400 font-bold">
-              {saturdayCountdowns.filter(d => !d.passed).length} tirage(s) restant(s)
+              {isClient ? saturdayCountdowns.filter(d => !d.passed).length : '—'} tirage(s) restant(s)
             </span>
           </div>
         </section>

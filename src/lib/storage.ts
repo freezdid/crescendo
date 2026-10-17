@@ -98,6 +98,9 @@ export async function loadModel(): Promise<tfType.LayersModel | null> {
   try {
     const tf = await import('@tensorflow/tfjs');
     const model = await tf.loadLayersModel(MODEL_PATH);
+    // A model restored from storage is not compiled: without this, the first
+    // fit() throws "The model needs to be compiled before being used".
+    model.compile({ loss: 'meanAbsoluteError', optimizer: tf.train.adam(0.0005) });
     return model;
   } catch {
     return null;
