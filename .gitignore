@@ -44,3 +44,6 @@ next-env.d.ts
 # Uncomment to exclude from version control (recommended for large projects):
 # **/AGENTS.md
 .open-mem/
+
+# local SQLite database (auto-seeded at boot from public/seed-draws.json)
+crescendo.db*
