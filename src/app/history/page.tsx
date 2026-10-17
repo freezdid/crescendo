@@ -2,13 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, Calendar, Search, Filter, Download, 
-  Sparkles, Layers, ArrowUpDown, Clock, Database 
-} from 'lucide-react';
+import { ChevronLeft, Calendar, Search, Download, Clock, Database } from 'lucide-react';
 import Link from 'next/link';
 import { loadDraws } from '@/lib/storage';
-import { SAMEDI_LETTERS, extractNumbersAndLetter, NUM_TO_LETTER } from '@/lib/stats';
+import { SAMEDI_LETTERS, extractNumbersAndLetter } from '@/lib/stats';
 
 interface DrawItem {
   id?: number;
@@ -33,7 +30,6 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLetterFilter, setSelectedLetterFilter] = useState<string>("ALL");
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   useEffect(() => {
     async function fetchDraws() {
@@ -77,11 +73,8 @@ export default function HistoryPage() {
           letterChar.toUpperCase() === selectedLetterFilter.toUpperCase();
 
         return matchesSearch && matchesLetter;
-      })
-      .sort((a, b) => {
-        return sortOrder === 'desc' ? 0 : -1;
       });
-  }, [draws, searchTerm, selectedLetterFilter, sortOrder]);
+  }, [draws, searchTerm, selectedLetterFilter]);
 
   const handleExportJSON = () => {
     const blob = new Blob([JSON.stringify(draws, null, 2)], { type: 'application/json' });

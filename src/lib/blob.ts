@@ -2,7 +2,7 @@ import { put, list } from '@vercel/blob';
 
 const DEFAULT_BLOB_PATH = 'crescendo_history.json';
 
-export async function saveToBlob(data: any, pathname: string = DEFAULT_BLOB_PATH) {
+export async function saveToBlob(data: unknown, pathname: string = DEFAULT_BLOB_PATH) {
   try {
     const { url } = await put(pathname, JSON.stringify(data), {
       access: 'public',

@@ -117,9 +117,9 @@ export function processData(draws: LotoDraw[]): ProcessedDraw[] {
         const yearPart = parts[3];
         const months: any = { "janvier": 0, "février": 1, "mars": 2, "avril": 3, "mai": 4, "juin": 5, "juillet": 6, "août": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11 };
         
-        let timeHours = parseInt(d.time.replace('h', ''), 10);
+        const timeHours = parseInt(d.time.replace('h', ''), 10);
         return new Date(parseInt(yearPart), months[monthPart.toLowerCase()] || 0, parseInt(dayPart), timeHours).getTime();
-      } catch(e) { return Date.now(); }
+      } catch { return Date.now(); }
     };
 
     return {

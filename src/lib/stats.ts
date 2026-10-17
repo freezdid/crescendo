@@ -113,16 +113,20 @@ export const STRATEGY_CONFIG: Record<StrategyType, { label: string; desc: string
 /**
  * Normalise any draw object into a 10-numbers array and letter number
  */
-export function extractNumbersAndLetter(d: any): { nums: number[]; letterNum: number; letterChar: string } {
-  const nums = [d.num0, d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.num7, d.num8, d.num9].map(Number);
+export function extractNumbersAndLetter(d: ProcessedDraw | LotoDraw | Record<string, unknown>): { nums: number[]; letterNum: number; letterChar: string } {
+  const drawObj = d as Record<string, unknown>;
+  const nums = [
+    Number(drawObj.num0), Number(drawObj.num1), Number(drawObj.num2), Number(drawObj.num3), Number(drawObj.num4),
+    Number(drawObj.num5), Number(drawObj.num6), Number(drawObj.num7), Number(drawObj.num8), Number(drawObj.num9)
+  ];
   let letterChar = 'S';
   let letterNum = 1;
 
-  if (typeof d.letter === 'string' && d.letter.trim().length > 0) {
-    letterChar = d.letter.trim().toUpperCase()[0];
+  if (typeof drawObj.letter === 'string' && drawObj.letter.trim().length > 0) {
+    letterChar = drawObj.letter.trim().toUpperCase()[0];
     letterNum = LETTER_TO_NUM[letterChar] || 1;
-  } else if (typeof d.letterNum === 'number') {
-    letterNum = Math.max(1, Math.min(6, d.letterNum));
+  } else if (typeof drawObj.letterNum === 'number') {
+    letterNum = Math.max(1, Math.min(6, drawObj.letterNum));
     letterChar = NUM_TO_LETTER[letterNum] || 'S';
   }
 
@@ -228,7 +232,6 @@ export function calculateComprehensiveStats(draws: (ProcessedDraw | LotoDraw)[])
 
   for (let n = 1; n <= 25; n++) {
     const count = counts[n];
-    const freq = Number(((count / (total * 10)) * 100 * 10).toFixed(1)); // percentage of draws containing this number
     const actualDrawFreq = Number(((count / total) * 100).toFixed(1));
     const delay = currentDelays[n];
     const maxDel = maxDelays[n];

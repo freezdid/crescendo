@@ -3,10 +3,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Activity, Database, Play, Sparkles, RefreshCw, ChevronRight, Trophy, 
-  Target, ListOrdered, Brain, History, Settings, Calendar, Flame, 
-  Snowflake, Cpu, ShieldCheck, Copy, Check, Info, TrendingUp, BarChart3,
-  Layers, Zap, HelpCircle, CheckCircle2, AlertTriangle, ArrowUpRight
+  Activity, Sparkles, RefreshCw, Trophy, 
+  Target, Brain, History, Flame, 
+  Copy, Check, Info, TrendingUp, Zap, CheckCircle2
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import * as tf from '@tensorflow/tfjs';
@@ -17,7 +16,6 @@ import {
   createDataset, 
   buildAdvancedModel, 
   buildFastModel, 
-  runBacktest, 
   ProcessedDraw, 
   initTensorFlow, 
   TRAINING_CONFIG 
@@ -32,9 +30,7 @@ import {
   StrategyType, 
   STRATEGY_CONFIG, 
   SAMEDI_LETTERS, 
-  runStrategyBacktest,
-  NUM_TO_LETTER,
-  LETTER_TO_NUM
+  runStrategyBacktest
 } from '@/lib/stats';
 
 import { 
@@ -96,6 +92,51 @@ export default function Home() {
     if (simSelectedNumbers.length !== 10) return null;
     return analyzeGrille([...simSelectedNumbers, simSelectedLetter], stats || undefined);
   }, [simSelectedNumbers, simSelectedLetter, stats]);
+
+  const updateModelReferences = (currentData: ProcessedDraw[], length: number = windowLength) => {
+    if (currentData.length < length + 2) return;
+    const { scaler, lastTwelve } = createDataset(currentData, length);
+    scalerRef.current = scaler;
+    lastTwelveRef.current = lastTwelve;
+  };
+
+  const handleScrape = async (deep: boolean = false) => {
+    setIsScraping(true);
+    setScrapeStatus(deep ? "Scraping approfondi (2025-2026)..." : "Vérification des derniers tirages...");
+    try {
+      const res = await fetch(`/api/crescendo${deep ? '?deep=true' : ''}`);
+      const json = await res.json();
+      if (json.success && json.results.length > 0) {
+        const processed = processData(json.results);
+        const isNew = processed.length > data.length;
+
+        setData(processed);
+        const computedStats = calculateComprehensiveStats(processed);
+        setStats(computedStats);
+        await saveDraws(processed);
+        updateModelReferences(processed);
+
+        if (!tfModel.current) {
+          tfModel.current = buildAdvancedModel(windowLength, 36, 11);
+          setModelReady(true);
+        }
+
+        setScrapeStatus(isNew ? `${processed.length - data.length} nouveau(x) tirage(s) synchronisé(s) !` : "Tirages à jour");
+
+        // Background Cloud Push
+        fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: processed, type: 'draws' })
+        }).catch(err => console.error("Sync push failed:", err));
+      }
+    } catch (e) {
+      console.error("Scrape error:", e);
+      setScrapeStatus("Données locales conservées");
+    }
+    setIsScraping(false);
+    setTimeout(() => setScrapeStatus(""), 4500);
+  };
 
   // Initial Load
   useEffect(() => {
@@ -167,52 +208,8 @@ export default function Home() {
     }
 
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const updateModelReferences = (currentData: ProcessedDraw[], length: number = windowLength) => {
-    if (currentData.length < length + 2) return;
-    const { scaler, lastTwelve } = createDataset(currentData, length);
-    scalerRef.current = scaler;
-    lastTwelveRef.current = lastTwelve;
-  };
-
-  const handleScrape = async (deep: boolean = false) => {
-    setIsScraping(true);
-    setScrapeStatus(deep ? "Scraping approfondi (2025-2026)..." : "Vérification des derniers tirages...");
-    try {
-      const res = await fetch(`/api/crescendo${deep ? '?deep=true' : ''}`);
-      const json = await res.json();
-      if (json.success && json.results.length > 0) {
-        const processed = processData(json.results);
-        const isNew = processed.length > data.length;
-
-        setData(processed);
-        const computedStats = calculateComprehensiveStats(processed);
-        setStats(computedStats);
-        await saveDraws(processed);
-        updateModelReferences(processed);
-
-        if (!tfModel.current) {
-          tfModel.current = buildAdvancedModel(windowLength, 36, 11);
-          setModelReady(true);
-        }
-
-        setScrapeStatus(isNew ? `${processed.length - data.length} nouveau(x) tirage(s) synchronisé(s) !` : "Tirages à jour");
-
-        // Background Cloud Push
-        fetch('/api/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: processed, type: 'draws' })
-        }).catch(err => console.error("Sync push failed:", err));
-      }
-    } catch (e) {
-      console.error("Scrape error:", e);
-      setScrapeStatus("Données locales conservées");
-    }
-    setIsScraping(false);
-    setTimeout(() => setScrapeStatus(""), 4500);
-  };
 
   const handleTrainModel = async () => {
     if (data.length === 0) return;
@@ -276,7 +273,7 @@ export default function Home() {
     if (!stats) return;
     setIsOptimizing(true);
 
-    let neuralCandidates: number[][] = [];
+    const neuralCandidates: number[][] = [];
 
     // If Neural Model is ready, sample candidate sequences
     if (tfModel.current && lastTwelveRef.current && scalerRef.current) {
@@ -426,6 +423,9 @@ export default function Home() {
               </span>
               <span className="text-slate-400">Moteur:</span>
               <span className="text-slate-200 font-semibold">{backendName}</span>
+              <span className="text-white/20">•</span>
+              <span className="text-slate-400">Cloud:</span>
+              <span className="text-amber-400 font-semibold">{syncStatus}</span>
             </div>
 
             <button
@@ -1062,14 +1062,33 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/[0.08] text-xs">
+                <button
+                  onClick={() => setTrainingMode('fast')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                    trainingMode === 'fast' ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Turbo (25 ép.)
+                </button>
+                <button
+                  onClick={() => setTrainingMode('precise')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                    trainingMode === 'precise' ? 'bg-amber-400 text-slate-950 shadow-md' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Elite (50 ép.)
+                </button>
+              </div>
+
               <button
                 onClick={handleRunBacktest}
                 disabled={isBacktesting || data.length < 30}
                 className="btn-ghost-dark text-xs py-2 px-4"
               >
                 <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
-                <span>{isBacktesting ? "Simulation en cours..." : "Lancer Backtest (35 tirages)"}</span>
+                <span>{isBacktesting ? "Simulation..." : "Lancer Backtest (35 tirages)"}</span>
               </button>
             </div>
           </div>

@@ -2,15 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Trophy, Calendar, Target, ChevronLeft, ArrowRight, Brain, 
-  AlertCircle, Sparkles, RefreshCw, CheckCircle2, TrendingUp,
-  Award, Coins, ArrowUpRight
-} from 'lucide-react';
+import { ChevronLeft, Brain, AlertCircle, Sparkles, RefreshCw, Award, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { loadDraws, loadPredictions, savePredictions, SavedPrediction } from '@/lib/storage';
 import { ProcessedDraw } from '@/lib/model';
-import { SAMEDI_LETTERS, NUM_TO_LETTER, extractNumbersAndLetter } from '@/lib/stats';
+import { NUM_TO_LETTER, extractNumbersAndLetter } from '@/lib/stats';
 
 export default function JournalPage() {
   const [data, setData] = useState<ProcessedDraw[]>([]);
