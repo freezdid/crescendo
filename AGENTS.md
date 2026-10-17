@@ -59,10 +59,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\app\api\crescendo/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| ac0899a7-5788-456d-aeff-19466b6d00f4 | 🔴 bugfix | Multi-page scrape only persists last page due to store overwrite | 2026-10-17 |
 | 84a03539-a8e8-4c98-951c-3e18419c7d86 | 🔵 discovery | Backend API surface exposes four route modules | 2026-10-17 |
 | 14b08364-b428-45a2-b73f-77b33f546a28 | 🔵 discovery | Crescendo project exposes a 4-endpoint API covering scrape, sync, DB reads, and cron | 2026-10-17 |
 
-**Key concepts:** how-it-works: Server-side fetch handlers centralizing scrape → SQLite → IndexedDB + Vercel Blob sync pipeline, why-it-exists: Backbone of Crescendo's backend; enables auto-refresh, model persistence, and cross-device data availability, pattern: Route-per-feature architecture matching Next.js App Router conventions for each data domain (draws, sync, scrape, cron), how-it-works, why-it-exists, pattern, trade-off, Vercel, Cheerio, scraping
+**Key concepts:** how-it-works: Fetch page → collect into local array → reverse → replace single 'all_draws' blob with this page's set, why-it-exists: Rapid fetch to seed dashboard + sync endpoint with fresh draws before neural training begins; the `deep` flag extends reach backward, gotcha: Repeated full-store replacements naively discard earlier pages even though `allScraped` retains them locally during the loop, trade-off: Immediate persistence guarantees live dashboard updates mid-scrape at the cost of completeness; deferred full-merges restore correctness but add latency until the whole loop completes, how-it-works: Server-side fetch handlers centralizing scrape → SQLite → IndexedDB + Vercel Blob sync pipeline, why-it-exists: Backbone of Crescendo's backend; enables auto-refresh, model persistence, and cross-device data availability, pattern: Route-per-feature architecture matching Next.js App Router conventions for each data domain (draws, sync, scrape, cron), how-it-works, why-it-exists, pattern
 
 ### src\app\api\cron/
 | ID | Type | Title | Date |
@@ -122,6 +123,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ### src\lib/
 | ID | Type | Title | Date |
 |----|------|-------|------|
+| 61a51d88-04b2-4ab8-a851-42f59cbc95c4 | 🔵 discovery | Statistical engine computes per-number delay and Poisson rebound from drawn history | 2026-10-17 |
+| d64e25fb-b7d6-4a2c-97bc-f40f43746952 | 🔵 discovery | TF.js LSTM pipeline exposes central data normalization entry | 2026-10-17 |
 | c95ba48a-9f3b-4517-b91b-d691775c4ae2 | 🔴 bugfix | Chronological ordering hardened at the DB layer with shared parseDrawDate (real data was NOT ordered) | 2026-10-17 |
 | 0692713d-bbb8-4a44-b83f-c42b685bf954 | 🔵 discovery | Model pipeline transforms processed draws into scaled sliding windows and trains 2-layer BiLSTM classifier | 2026-10-17 |
 | 1f2a7e56-861a-4ec4-af33-a8e0f09c2ca5 | 🔵 discovery | TensorFlow LSTM pipeline hydrates raw Crescendo draws into numerical training features | 2026-10-17 |
@@ -130,10 +133,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | 301b26ae-482d-43b6-a847-3907dc415c36 | 🔴 bugfix | Fixed long-standing chronological ordering bug: processData reversed an already chronological array | 2026-10-17 |
 | 699cd9ed-2226-4378-adbd-3a1134667379 | 🔵 discovery | `processData` is the central data transformation entry point | 2026-10-17 |
 | f7ab2209-edec-46f3-a410-8ac42221491d | 🟣 feature | IndexedDB stores persist draws, predictions, last-active grids, and LSTM model locally | 2026-10-17 |
-| 14a42433-a18c-47a2-af61-7e43557a51ee | 🔵 discovery | IndexedDB data layer persists draws, predictions, and model separately | 2026-10-17 |
-| 9e3dd12a-ac34-4458-a8e7-167102bfc0ff | 🔵 discovery | Simple Azure Blob put/list abstraction for Vercel Blob persistence | 2026-10-17 |
 
-**Key concepts:** how-it-works, chronological-order, shared-module, gotcha, 1er-date-parsing, single-source-of-truth, why-it-exists, pattern, trade-off, TensorFlow
+**Key concepts:** how-it-works, why-it-exists, pattern, trade-off, Crescendo game, heatmap-statistic, risk-assessment, how-it-works: LotoDraw[]→ reverse → per-element statistical feature expansion then chunk into sliding windows for `createDataset`, why-it-exists: Single point of truth normalizes raw format output to model-ready tensors enabling feature engineering constants rather than raw integer scattering, gotcha: reversing early enforces chronological ordering for sequential window stepping, but re-running processData recomputes LAST seen map values silently — window alignment dependent on stable historical sequence; mixed forward/reverse content inflates distances unexpectedly
 
 💡 *Use `mem-find` to search full details. Use `mem-create` to save important decisions.*
 <!-- /open-mem-context -->

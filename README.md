@@ -32,7 +32,7 @@
 - **Animations fluides** via Framer Motion avec micro-interactions
 
 ### ⏱️ Compte à Rebours Samedi
-- **Timer en temps réel** pour les 6 tirages du samedi (14h à 19h)
+- **Timer en temps réel** pour les 7 tirages du samedi (13h à 19h)
 - **Indicateur "Prochain"** avec animation pulsante
 - **Alerte d'urgence** quand un tirage est dans moins d'1 heure
 - **Date et heure locale** affichées en temps réel

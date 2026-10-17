@@ -51,8 +51,8 @@ import {
 
 // Pure helper: next Saturday draw countdowns (module-level so it is stable for hooks)
 function computeSaturdayCountdowns(now: Date) {
-  const drawHours = [14, 15, 16, 17, 18, 19];
-  const drawLabels = ['14h00', '15h00', '16h00', '17h00', '18h00', '19h00'];
+  const drawHours = [13, 14, 15, 16, 17, 18, 19];
+  const drawLabels = ['13h00', '14h00', '15h00', '16h00', '17h00', '18h00', '19h00'];
 
   // Find next Saturday (or today if Saturday)
   const dayOfWeek = now.getDay(); // 0=Sun, 6=Sat
@@ -1271,7 +1271,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
             {saturdayCountdowns.map((draw) => {
               const hours = Math.floor(draw.diff / (1000 * 60 * 60));
               const minutes = Math.floor((draw.diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -1329,7 +1329,7 @@ export default function Home() {
 
           {/* Quick info bar */}
           <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-            <span>6 tirages chaque samedi de 14h à 19h • Résultats synchronisés automatiquement</span>
+            <span>7 tirages chaque samedi de 13h à 19h • Résultats synchronisés automatiquement</span>
             <span className="text-emerald-400 font-bold">
               {saturdayCountdowns.filter(d => !d.passed).length} tirage(s) restant(s)
             </span>
