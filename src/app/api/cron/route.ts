@@ -10,6 +10,13 @@ async function fetchLatestDraws() {
 
 export async function GET(req: Request) {
   try {
+    // Optional protection: when CRON_SECRET is configured, Vercel automatically sends it
+    // as `Authorization: Bearer <CRON_SECRET>` for cron invocations.
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && req.headers.get('authorization') !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     console.log("Démarrage du Cron Crescendo Quantum...");
     
     // 1. Fetch latest draws via API

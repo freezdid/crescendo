@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Calendar, Search, Download, Clock, Database } from 'lucide-react';
+import { ChevronLeft, Calendar, Search, Download, Clock, Database, ChevronDown, BarChart3, Hash } from 'lucide-react';
 import Link from 'next/link';
 import { loadDraws } from '@/lib/storage';
 import { SAMEDI_LETTERS, extractNumbersAndLetter } from '@/lib/stats';
@@ -25,11 +25,14 @@ interface DrawItem {
   letterNum?: number;
 }
 
+const DRAWS_PER_PAGE = 30;
+
 export default function HistoryPage() {
   const [draws, setDraws] = useState<DrawItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLetterFilter, setSelectedLetterFilter] = useState<string>("ALL");
+  const [visibleCount, setVisibleCount] = useState(DRAWS_PER_PAGE);
 
   useEffect(() => {
     async function fetchDraws() {
@@ -38,18 +41,17 @@ export default function HistoryPage() {
         const saved = await loadDraws() as any;
         if (saved && saved.length > 0) {
           setDraws([...saved].reverse());
-          setLoading(false);
         }
       } catch (e) {
         console.error(e);
       }
 
-      // 2. Fetch from API
+      // 2. Fetch from API (chronological) — keep local data if it is richer
       try {
         const res = await fetch('/api/draws');
         const json = await res.json();
         if (json.success && json.results && json.results.length > 0) {
-          setDraws([...json.results].reverse());
+          setDraws(prev => (json.results.length >= prev.length ? [...json.results].reverse() : prev));
         }
       } catch (e) {
         console.error(e);
@@ -75,6 +77,63 @@ export default function HistoryPage() {
         return matchesSearch && matchesLetter;
       });
   }, [draws, searchTerm, selectedLetterFilter]);
+
+  // Paginated draws
+  const visibleDraws = useMemo(() => {
+    return filteredDraws.slice(0, visibleCount);
+  }, [filteredDraws, visibleCount]);
+
+  const hasMore = visibleCount < filteredDraws.length;
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => Math.min(prev + DRAWS_PER_PAGE, filteredDraws.length));
+  };
+
+  const handleLoadAll = () => {
+    setVisibleCount(filteredDraws.length);
+  };
+
+  // Reset pagination whenever filters change (kept out of an effect to avoid cascading renders)
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setVisibleCount(DRAWS_PER_PAGE);
+  };
+
+  const handleLetterFilterChange = (letter: string) => {
+    setSelectedLetterFilter(letter);
+    setVisibleCount(DRAWS_PER_PAGE);
+  };
+
+  // Stats summary
+  const statsSummary = useMemo(() => {
+    if (draws.length === 0) return null;
+    
+    const allNums: number[] = [];
+    const letterCounts: Record<string, number> = {};
+    
+    draws.forEach(d => {
+      const { nums, letterChar } = extractNumbersAndLetter(d);
+      allNums.push(...nums);
+      letterCounts[letterChar] = (letterCounts[letterChar] || 0) + 1;
+    });
+    
+    const numCounts: Record<number, number> = {};
+    allNums.forEach(n => { numCounts[n] = (numCounts[n] || 0) + 1; });
+    
+    const sorted = Object.entries(numCounts).sort(([, a], [, b]) => b - a);
+    const topNum = sorted[0] ? Number(sorted[0][0]) : 0;
+    const topNumCount = sorted[0] ? sorted[0][1] : 0;
+    
+    const topLetter = Object.entries(letterCounts).sort(([, a], [, b]) => b - a)[0];
+    
+    return {
+      total: draws.length,
+      topNum,
+      topNumCount,
+      topLetter: topLetter ? topLetter[0] : 'S',
+      topLetterCount: topLetter ? topLetter[1] : 0,
+    };
+  }, [draws]);
 
   const handleExportJSON = () => {
     const blob = new Blob([JSON.stringify(draws, null, 2)], { type: 'application/json' });
@@ -115,7 +174,7 @@ export default function HistoryPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-              ARCHIVES <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">CRESCENDO</span>
+              ARCHIVES <span className="text-amber-400">CRESCENDO</span>
             </h1>
             <div className="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider">
               {draws.length} Tirages Enregistrés
@@ -123,7 +182,7 @@ export default function HistoryPage() {
           </div>
 
           <p className="text-slate-400 text-sm max-w-xl">
-            Historique complet des combinaisons officielles, horodatées et synchronisées en haute performance pour l&apos;apprentissage automatique.
+            Historique complet de <strong className="text-white">{draws.length}</strong> combinaisons officielles, horodatées et synchronisées en haute performance pour l&apos;apprentissage automatique.
           </p>
         </div>
 
@@ -146,6 +205,40 @@ export default function HistoryPage() {
         </div>
       </header>
 
+      {/* Quick Stats Summary */}
+      {statsSummary && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="luxury-panel p-4 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+              <Database className="w-3 h-3" /> Total Tirages
+            </span>
+            <div className="text-2xl font-black text-white">{statsSummary.total}</div>
+          </div>
+          <div className="luxury-panel p-4 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+              <Hash className="w-3 h-3" /> Numéro le + fréquent
+            </span>
+            <div className="text-2xl font-black text-amber-400">
+              {statsSummary.topNum} <span className="text-xs text-slate-400 font-normal">({statsSummary.topNumCount}×)</span>
+            </div>
+          </div>
+          <div className="luxury-panel p-4 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+              <BarChart3 className="w-3 h-3" /> Lettre Dominante
+            </span>
+            <div className="text-2xl font-black text-emerald-400">
+              {statsSummary.topLetter} <span className="text-xs text-slate-400 font-normal">({statsSummary.topLetterCount}×)</span>
+            </div>
+          </div>
+          <div className="luxury-panel p-4 flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+              <Search className="w-3 h-3" /> Résultats filtrés
+            </span>
+            <div className="text-2xl font-black text-cyan-400">{filteredDraws.length}</div>
+          </div>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="luxury-panel p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         
@@ -157,7 +250,7 @@ export default function HistoryPage() {
             placeholder="Rechercher une date, heure ou numéro (ex: samedi, 14h, 17...)" 
             className="w-full bg-[#090b12] border border-white/[0.08] rounded-xl py-2.5 pl-11 pr-4 focus:outline-none focus:border-amber-500/60 transition-colors font-medium text-sm text-slate-200 placeholder:text-slate-500"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
@@ -165,7 +258,7 @@ export default function HistoryPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
           <span className="text-xs font-bold text-slate-400 mr-2 whitespace-nowrap">Lettre :</span>
           <button
-            onClick={() => setSelectedLetterFilter("ALL")}
+            onClick={() => handleLetterFilterChange("ALL")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               selectedLetterFilter === "ALL"
                 ? 'bg-amber-500 text-slate-950 font-black'
@@ -177,7 +270,7 @@ export default function HistoryPage() {
           {SAMEDI_LETTERS.map(char => (
             <button
               key={char}
-              onClick={() => setSelectedLetterFilter(char)}
+              onClick={() => handleLetterFilterChange(char)}
               className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${
                 selectedLetterFilter === char
                   ? 'bg-amber-400 text-slate-950 shadow-md'
@@ -190,6 +283,8 @@ export default function HistoryPage() {
         </div>
       </div>
 
+
+
       {/* Loading State */}
       {loading ? (
         <div className="flex-1 flex flex-col items-center justify-center py-28 gap-3 opacity-60">
@@ -199,13 +294,19 @@ export default function HistoryPage() {
       ) : filteredDraws.length === 0 ? (
         <div className="luxury-panel p-12 text-center text-slate-400 flex flex-col items-center gap-3">
           <Database className="w-10 h-10 text-slate-600" />
-          <div className="font-bold text-white text-base">Aucun tirage ne correspond à vos critères</div>
-          <p className="text-xs max-w-sm">Vérifiez l&apos;orthographe de votre recherche ou réinitialisez les filtres.</p>
+          <div className="font-bold text-white text-base">
+            {draws.length === 0 ? "Aucun tirage enregistré" : "Aucun tirage ne correspond à vos critères"}
+          </div>
+          <p className="text-xs max-w-sm">
+            {draws.length === 0
+              ? "Lancez une synchronisation depuis le Laboratoire IA pour récupérer les tirages officiels."
+              : "Vérifiez l'orthographe de votre recherche ou réinitialisez les filtres."}
+          </p>
         </div>
       ) : (
         /* Draws Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDraws.map((draw, idx) => {
+          {visibleDraws.map((draw, idx) => {
             const { nums, letterChar } = extractNumbersAndLetter(draw);
             const sum = nums.reduce((a, b) => a + b, 0);
             const evens = nums.filter(n => n % 2 === 0).length;
@@ -259,6 +360,25 @@ export default function HistoryPage() {
               </motion.div>
             );
           })}
+        </div>
+      )}
+
+      {/* Load More Button at bottom */}
+      {hasMore && !loading && filteredDraws.length > 0 && (
+        <div className="flex flex-col items-center gap-3 py-6">
+          <button
+            onClick={handleLoadMore}
+            className="btn-gold text-sm py-3 px-8 shadow-xl"
+          >
+            <ChevronDown className="w-4 h-4" />
+            <span>Charger {Math.min(DRAWS_PER_PAGE, filteredDraws.length - visibleCount)} tirages supplémentaires</span>
+          </button>
+          <button
+            onClick={handleLoadAll}
+            className="text-xs text-slate-400 hover:text-amber-400 transition-colors font-bold"
+          >
+            Afficher la totalité des {filteredDraws.length} tirages
+          </button>
         </div>
       )}
     </main>

@@ -1,5 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgpu';
+import { parseDrawDate } from './dates';
 
 export async function initTensorFlow() {
   await tf.ready();
@@ -83,13 +84,15 @@ function countImpairs(nums: number[]) { return nums.filter(n => impairs.has(n)).
 function countUnder(nums: number[], val: number) { return nums.filter(n => n <= val).length; }
 
 export function processData(draws: LotoDraw[]): ProcessedDraw[] {
-  const reversed = [...draws].reverse();
-  
+  // Normalize to chronological order (index 0 = oldest, last = newest) regardless of input order.
+  // The stats engine, backtest and neural dataset all assume this convention.
+  const ordered = [...draws].sort((a, b) => parseDrawDate(a) - parseDrawDate(b));
+
   const freqMap: Record<string, number> = {};
   const lastSeenMap: Record<number, number> = {};
   const lastSeenLetterMap: Record<number, number> = {};
 
-  return reversed.map((d, i) => {
+  return ordered.map((d, i) => {
     const nums = [d.num0, d.num1, d.num2, d.num3, d.num4, d.num5, d.num6, d.num7, d.num8, d.num9];
     const letterMap: Record<string, number> = { 'S': 1, 'A': 2, 'M': 3, 'E': 4, 'D': 5, 'I': 6 };
     const letterNum = d.letter ? (letterMap[d.letter.toUpperCase()] || 1) : 1;
@@ -108,23 +111,9 @@ export function processData(draws: LotoDraw[]): ProcessedDraw[] {
     const distLetter = lastSeenLetterMap[letterNum] !== undefined ? i - lastSeenLetterMap[letterNum] : i;
     lastSeenLetterMap[letterNum] = i;
 
-    const parseDate = () => {
-      try {
-        const parts = d.date.split(' ');
-        // e.g. "samedi 25 avril 2026" -> ["samedi", "25", "avril", "2026"]
-        const dayPart = parts[1];
-        const monthPart = parts[2];
-        const yearPart = parts[3];
-        const months: any = { "janvier": 0, "février": 1, "mars": 2, "avril": 3, "mai": 4, "juin": 5, "juillet": 6, "août": 7, "septembre": 8, "octobre": 9, "novembre": 10, "décembre": 11 };
-        
-        const timeHours = parseInt(d.time.replace('h', ''), 10);
-        return new Date(parseInt(yearPart), months[monthPart.toLowerCase()] || 0, parseInt(dayPart), timeHours).getTime();
-      } catch { return Date.now(); }
-    };
-
     return {
       ...d,
-      fullDate: parseDate(),
+      fullDate: parseDrawDate(d),
       letterNum,
       freq_num0: updateFreq('num0', d.num0),
       freq_num1: updateFreq('num1', d.num1),

@@ -1,6 +1,7 @@
-import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { LotoDraw } from './model';
+import { parseDrawDate } from './dates';
 
 const isVercel = process.env.VERCEL === '1';
 const dbPath = isVercel 
@@ -69,11 +70,35 @@ export function saveDrawsToDB(draws: LotoDraw[]) {
   insertMany(draws);
 }
 
+// Seed the SQLite DB from the bundled snapshot when empty (fresh deployment)
+try {
+  const count = db.prepare('SELECT COUNT(*) as c FROM draws').get() as { c: number } | null;
+  if (!count || count.c === 0) {
+    const seedPath = path.resolve(process.cwd(), 'public', 'seed-draws.json');
+    if (fs.existsSync(seedPath)) {
+      const seed = JSON.parse(fs.readFileSync(seedPath, 'utf-8')) as LotoDraw[];
+      if (Array.isArray(seed) && seed.length > 0) {
+        const ordered = [...seed].sort((a, b) => parseDrawDate(a) - parseDrawDate(b));
+        saveDrawsToDB(ordered);
+        console.log(`Seeded SQLite with ${seed.length} historical draws from public/seed-draws.json`);
+      }
+    }
+  }
+} catch (e) {
+  console.error("Seed error:", e);
+}
+
 export function getAllDrawsFromDB(): LotoDraw[] {
-  return db.prepare('SELECT * FROM draws ORDER BY id ASC').all() as LotoDraw[];
+  // Row ids are not guaranteed to be chronological (scrapes insert week by week,
+  // seeds may be ordered differently), so always sort by parsed date.
+  const rows = db.prepare('SELECT * FROM draws ORDER BY id ASC').all() as LotoDraw[];
+  return rows.sort((a, b) => parseDrawDate(a) - parseDrawDate(b));
 }
 
 export function getLastDrawDate(): { date: string, time: string } | null {
-  return db.prepare('SELECT date, time FROM draws ORDER BY id DESC LIMIT 1').get() as any || null;
+  const draws = getAllDrawsFromDB();
+  if (draws.length === 0) return null;
+  const last = draws[draws.length - 1];
+  return { date: last.date, time: last.time };
 }
 

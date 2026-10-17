@@ -1,66 +1,129 @@
-# 🎹 Crescendo Quantum IA
+# 🎯 Crescendo Quantum IA — Moteur Prédictif Neuronal v2.5 Pro
 
-![AI Neural Network](https://img.shields.io/badge/AI-Neural_Network-blue?style=for-the-badge&logo=brain)
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
-![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-WebGPU-orange?style=for-the-badge&logo=tensorflow)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss)
+> **Analyse probabiliste avancée et prédictions par intelligence artificielle pour les tirages Crescendo**
 
-> Laboratoire quantique d'analyse probabiliste et prédictive avancée pour le jeu Crescendo (10 numéros parmi 25 + 1 lettre SAMEDI), propulsé par des réseaux neuronaux profonds LSTM et l'optimisation GTO.
-
----
-
-## 🌟 Nouveautés Majeures
-
-### 👁️ 1. Visualisation Comparée Côte à Côte
-- **Face-à-Face en Temps Réel** : Présentation côte à côte du **Dernier Tirage Réel Confirmé** (date, heure, boules, lettre SAMEDI, somme, parité) et de la **Prédiction IA Suivante**.
-- **Détection des Numéros Communs** : Mise en surbrillance automatique des numéros récurrents d'un tirage à l'autre avec badge de concordance.
-- **Grilles Optimisées en 2 Colonnes** : Cartes compactes côte à côte (Grille 1 vs Grille 2, Grille 3 vs Grille 4) avec les 10 boules alignées, indicateurs GTO (Somme, Parité, Étalement, Affinité) et bouton de copie instantanée.
-
-### 🧠 2. Moniteur Visuel d'Entraînement Neuronal Local
-- **Supervision Temps Réel** : Suivi direct de chaque époque d'apprentissage (`Époque X / 50`, pourcentage de progression).
-- **Courbe de Perte Dynamique (MAE Loss)** : Visualisation Recharts animée en direct à chaque descente de gradient, avec calcul du pourcentage de réduction d'erreur (`-XX%`).
-- **Matrice Synaptique Active (36 Neurones)** : Grille dynamique représentant les entrées statistiques et couches bidirectionnelles LSTM, clignotant lors de l'activation des tenseurs WebGPU/WebGL.
-- **Modes d'Entraînement** : Bascule immédiate entre le mode *Turbo* (25 époques rapides) et *Elite* (50 époques approfondies).
-- **Module de Backtest Intégré** : Évaluation rétrospective sur 35 tirages récents avec taux de réussite &ge; 6 numéros et correspondance de lettre.
-
-### 🎯 3. Moteur Probabiliste 5 Stratégies
-1. **IA Hybride & GTO** : Réseau de neurones profonds + matrices de co-occurrence 25x25 + filtrage de somme idéale (110-150).
-2. **Surchauffe & Tendance** : Capture les séries et l'accélération récente des boules les plus fréquentes.
-3. **Écarts & Réversion Poisson** : Détection des cycles en retard critique selon la loi de distribution de Poisson.
-4. **Monte Carlo Quantique** : 10 000 tirages virtuels simulés par chaîne de Markov.
-5. **Couverture Maximale Réduite** : Grilles complémentaires anti-redondance balayant l'ensemble des 25 numéros.
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
+![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-4.x-orange?style=flat-square&logo=tensorflow)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-4-06B6D4?style=flat-square&logo=tailwindcss)
 
 ---
 
-## 🛠️ Stack Technique
+## ✨ Fonctionnalités
 
-- **Frontend** : Next.js 16 (App Router), React 19, Tailwind CSS v4, Framer Motion, Lucide Icons, Recharts.
-- **Moteur IA & Statistiques** : TensorFlow.js (Backends WebGPU / WebGL), loi de Poisson, matrices de co-occurrence 25x25.
-- **Persistance** : IndexedDB (côté client), SQLite & Vercel Blob (synchronisation cloud continue).
-- **Scraping Automatique** : API Cheerio avec pagination récursive et détection automatique des nouveaux tirages.
+### 🧠 Moteur d'Intelligence Artificielle
+- **Réseau neuronal LSTM bidirectionnel** avec mécanisme d'attention (128→64 unités)
+- **Entraînement local GPU** via WebGPU/WebGL avec TensorFlow.js
+- **Moniteur d'entraînement en direct** — courbe de loss, activité des neurones, progression temps réel
+- **Modes Turbo (25 ép.) et Elite (50 ép.)** pour ajuster vitesse vs précision
+- **Backtest automatisé** sur les 35 derniers tirages pour valider les performances
+
+### 📊 Analyse Statistique Avancée
+- **5 stratégies de génération** : IA Hybride, Surchauffe, Réversion Poisson, Monte Carlo, Couverture Max
+- **Matrice de co-occurrences** 25×25 pour les affinités entre numéros
+- **Classification thermique** : Chaud 🔥 / Tiède / Froid / Retardataire 🟢
+- **Probabilités de Poisson** individuelles pour chaque numéro et lettre SAMEDI
+- **Score de confiance IA** (0-100) et taux de confiance pour chaque grille générée
+
+### 🎨 Interface Premium
+- **Design Obsidian Glass** — dark mode luxueux avec glassmorphism et 3D balls
+- **Visualisation côte à côte** — Dernier tirage réel vs Prédiction IA
+- **Boules 3D réalistes** avec effets métalliques, dorés, cyan et émeraude
+- **Animations fluides** via Framer Motion avec micro-interactions
+
+### ⏱️ Compte à Rebours Samedi
+- **Timer en temps réel** pour les 6 tirages du samedi (14h à 19h)
+- **Indicateur "Prochain"** avec animation pulsante
+- **Alerte d'urgence** quand un tirage est dans moins d'1 heure
+- **Date et heure locale** affichées en temps réel
+
+### 📁 Archives Complètes
+- **Historique intégral** de tous les tirages passés (100% des données)
+- **Pagination progressive** (30 tirages par page, chargement infini)
+- **Recherche & filtres** par date, heure, numéro ou lettre SAMEDI
+- **Export CSV/JSON** de l'intégralité des données
+- **Statistiques résumées** — numéro et lettre les plus fréquents
+
+### 🔄 Synchronisation
+- **Scraping automatique** des résultats officiels
+- **IndexedDB local** pour la persistance côté client
+- **SQLite serveur** pour la base de données backend
+- **Seed embarqué** (`public/seed-draws.json`) — base historique réinjectée automatiquement si la BDD SQLite est vide (déploiement frais)
+- **Vercel Blob** pour la synchronisation cloud
+- **Sauvegarde automatique** du modèle neuronal entraîné
+- **Ordre chronologique garanti** — toutes les données sont normalisées (plus ancien → plus récent) quel que soit l'ordre d'entrée
 
 ---
 
-## 🚀 Installation & Démarrage
+## 🚀 Installation
 
 ```bash
-# Cloner le dépôt
+# Cloner le repository
 git clone https://github.com/freezdid/crescendo.git
-cd crescendo
+cd crescendo1
 
 # Installer les dépendances
 npm install
 
-# Démarrer le serveur de développement
+# Lancer en développement
 npm run dev
 ```
 
-Rendez-vous sur [http://localhost:3000](http://localhost:3000).
+L'application sera accessible sur `http://localhost:3000`
+
+## 📦 Stack Technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| Framework | Next.js 16 (App Router) |
+| IA / ML | TensorFlow.js (LSTM + Attention) |
+| Frontend | React 19 + TypeScript |
+| Styling | Tailwind CSS v4 |
+| Animations | Framer Motion |
+| Graphiques | Recharts |
+| Base de données | SQLite (better-sqlite3) + IndexedDB |
+| Cloud | Vercel Blob Storage |
+| Scraping | Cheerio |
+| Icônes | Lucide React |
+
+## 🔧 Variables d'environnement
+
+```env
+BLOB_READ_WRITE_TOKEN=<votre-token-vercel-blob>
+```
+
+## 📐 Architecture
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Dashboard principal (Laboratoire IA)
+│   ├── layout.tsx            # Layout racine avec police DM Sans
+│   ├── globals.css           # Design system Obsidian Glass
+│   ├── history/page.tsx      # Archives complètes avec pagination
+│   ├── journal/page.tsx      # Journal des gains
+│   └── api/
+│       ├── crescendo/route.ts  # Scraping des résultats officiels
+│       ├── draws/route.ts      # API des tirages (SQLite)
+│       ├── sync/route.ts       # Synchronisation cloud
+│       └── cron/route.ts       # Cron de mise à jour automatique
+├── lib/
+│   ├── model.ts              # Architecture LSTM + StandardScaler + Training
+│   ├── stats.ts              # Moteur statistique (Poisson, co-occurrences, GTO)
+│   ├── storage.ts            # Persistence IndexedDB + Model save/load
+│   ├── db.ts                 # SQLite serveur (better-sqlite3)
+│   └── blob.ts               # Vercel Blob helper
+```
+
+## 🧪 Utilisation
+
+1. **Synchroniser les données** — Cliquez sur "Sync" pour récupérer les derniers tirages
+2. **Entraîner le modèle** — Sélectionnez Turbo ou Elite puis lancez l'entraînement
+3. **Générer des grilles** — Choisissez une stratégie et le nombre de grilles souhaité
+4. **Analyser les résultats** — Consultez les scores, affinités et justifications IA
+5. **Surveiller le countdown** — Visualisez le temps restant avant chaque tirage du samedi
+6. **Explorer les archives** — Parcourez l'historique complet dans la page Archives
 
 ---
 
-## 📝 Licence
-
-Distribué sous licence MIT.
-
-*Avertissement : Cette application est un outil d'analyse probabiliste et de modélisation mathématique. Le jeu comporte des risques : endettement, dépendance. Pour être aidé, appelez le 09 74 75 13 13 (appel non surtaxé).*
+**Développé avec 🧠 et ☕ — Propulsé par l'IA quantique Crescendo**

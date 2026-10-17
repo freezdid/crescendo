@@ -186,7 +186,7 @@ export default function JournalPage() {
           Audit de Rentabilité & Suivi des Prédictions
         </div>
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-          JOURNAL DES <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">RÉSULTATS</span>
+          JOURNAL DES <span className="text-amber-400">RÉSULTATS</span>
         </h1>
         <p className="text-slate-400 text-sm max-w-2xl">
           Confrontation automatisée de chaque grille générée face aux tirages réels suivants, avec calcul des combinaisons gagnantes et des paliers de gains officiels.

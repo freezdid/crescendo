@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity, Sparkles, RefreshCw, Trophy, 
   Target, Brain, History, Flame, 
-  Copy, Check, Info, TrendingUp, Zap, CheckCircle2,
-  Cpu, ArrowRight, Gauge, ShieldCheck, Eye, Layers
+  Copy, Check, Info, TrendingUp, CheckCircle2,
+  Cpu, Eye, Layers,
+  Timer, Clock, Calendar
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import * as tf from '@tensorflow/tfjs';
@@ -48,6 +49,39 @@ import {
   loadLastPrediction 
 } from '@/lib/storage';
 
+// Pure helper: next Saturday draw countdowns (module-level so it is stable for hooks)
+function computeSaturdayCountdowns(now: Date) {
+  const drawHours = [14, 15, 16, 17, 18, 19];
+  const drawLabels = ['14h00', '15h00', '16h00', '17h00', '18h00', '19h00'];
+
+  // Find next Saturday (or today if Saturday)
+  const dayOfWeek = now.getDay(); // 0=Sun, 6=Sat
+  let daysUntilSat = (6 - dayOfWeek + 7) % 7;
+  if (daysUntilSat === 0) {
+    // It's Saturday - check if all draws have passed
+    const lastDrawTime = new Date(now);
+    lastDrawTime.setHours(19, 5, 0, 0);
+    if (now > lastDrawTime) {
+      daysUntilSat = 7; // Next Saturday
+    }
+  }
+
+  const nextSaturday = new Date(now);
+  nextSaturday.setDate(now.getDate() + daysUntilSat);
+
+  return drawHours.map((hour, idx) => {
+    const drawTime = new Date(nextSaturday);
+    drawTime.setHours(hour, 0, 0, 0);
+    const diff = drawTime.getTime() - now.getTime();
+    return {
+      hour,
+      label: drawLabels[idx],
+      diff: Math.max(0, diff),
+      passed: diff <= 0
+    };
+  });
+}
+
 export default function Home() {
   const [data, setData] = useState<ProcessedDraw[]>([]);
   const [stats, setStats] = useState<ComprehensiveStats | null>(null);
@@ -87,6 +121,10 @@ export default function Home() {
   const [simSelectedNumbers, setSimSelectedNumbers] = useState<number[]>([3, 7, 10, 12, 14, 18, 19, 21, 22, 25]);
   const [simSelectedLetter, setSimSelectedLetter] = useState<number>(3); // M
 
+  // Saturday Countdown Timer
+  const [saturdayCountdowns, setSaturdayCountdowns] = useState<{hour: number; label: string; diff: number; passed: boolean}[]>(() => computeSaturdayCountdowns(new Date()));
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
   // References
   const tfModel = useRef<tf.LayersModel | null>(null);
   const scalerRef = useRef<any>(null);
@@ -123,7 +161,12 @@ export default function Home() {
       const res = await fetch(`/api/crescendo${deep ? '?deep=true' : ''}`);
       const json = await res.json();
       if (json.success && json.results.length > 0) {
-        const processed = processData(json.results);
+        // Merge server results with local data (dedupe by date+time) to avoid any data loss
+        const merged = new Map<string, any>();
+        for (const d of data) merged.set(`${d.date}|${d.time}`, d);
+        for (const d of json.results) merged.set(`${d.date}|${d.time}`, d);
+
+        const processed = processData(Array.from(merged.values()));
         const isNew = processed.length > data.length;
 
         setData(processed);
@@ -153,24 +196,48 @@ export default function Home() {
     setTimeout(() => setScrapeStatus(""), 4500);
   };
 
+  // Update countdown every second
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setCurrentTime(now);
+      setSaturdayCountdowns(computeSaturdayCountdowns(now));
+    };
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Initial Load
   useEffect(() => {
     async function init() {
       // 0. TensorFlow Backend
-      await initTensorFlow();
-      setBackendName(tf.getBackend().toUpperCase());
+      try {
+        await initTensorFlow();
+        setBackendName(tf.getBackend()?.toUpperCase() || 'CPU');
+      } catch (e) {
+        console.warn('TF init fallback:', e);
+        setBackendName('CPU');
+      }
 
       // 1. Load Local Draws
-      const savedDraws = await loadDraws();
-      if (savedDraws && savedDraws.length > 0) {
-        setData(savedDraws);
-        const comprehensive = calculateComprehensiveStats(savedDraws);
-        setStats(comprehensive);
-        updateModelReferences(savedDraws);
+      let savedDraws: ProcessedDraw[] | null = null;
+      try {
+        savedDraws = await loadDraws();
+        if (savedDraws && savedDraws.length > 0) {
+          // Heal legacy ordering: processData always returns chronological (oldest first)
+          savedDraws = processData(savedDraws);
+          setData(savedDraws);
+          await saveDraws(savedDraws);
+          const comprehensive = calculateComprehensiveStats(savedDraws);
+          setStats(comprehensive);
+          updateModelReferences(savedDraws);
 
-        // Pre-generate initial predictions if none exist
-        const initial = generateSmartGrilles('HYBRID_AI', comprehensive, 4);
-        setGeneratedGrilles(initial);
+          // Pre-generate initial predictions if none exist
+          const initial = generateSmartGrilles('HYBRID_AI', comprehensive, 4);
+          setGeneratedGrilles(initial);
+        }
+      } catch (e) {
+        console.warn('Local data load error:', e);
       }
 
       // 2. Cloud Sync
@@ -195,27 +262,35 @@ export default function Home() {
       }
 
       // 3. Load Saved Predictions
-      const lastActive = await loadLastPrediction();
-      if (lastActive && lastActive.length > 0) {
-        const analyzed = lastActive.map(g => analyzeGrille(g, stats || undefined));
-        setGeneratedGrilles(analyzed);
+      try {
+        const lastActive = await loadLastPrediction();
+        if (lastActive && lastActive.length > 0) {
+          const analyzed = lastActive.map(g => analyzeGrille(g, stats || undefined));
+          setGeneratedGrilles(analyzed);
+        }
+      } catch (e) {
+        console.warn('Prediction load error:', e);
       }
 
       // 4. Model Check
-      const exists = await hasSavedModel();
-      if (exists) {
-        try {
+      try {
+        const exists = await hasSavedModel();
+        if (exists) {
           const model = await loadModel();
           if (model) {
             tfModel.current = model;
           }
-        } catch (e) {
-          console.error("Model load error:", e);
         }
+      } catch (e) {
+        console.error("Model load error:", e);
       }
 
       // 5. Auto scrape latest
-      await handleScrape(false);
+      try {
+        await handleScrape(false);
+      } catch (e) {
+        console.warn('Auto scrape failed:', e);
+      }
     }
 
     init();
@@ -223,7 +298,11 @@ export default function Home() {
   }, []);
 
   const handleTrainModel = async () => {
-    if (data.length === 0) return;
+    if (data.length === 0) {
+      console.warn('No data available for training');
+      return;
+    }
+    
     setIsTraining(true);
     setShowTrainingMonitor(true);
     setLossHistory([]);
@@ -232,31 +311,52 @@ export default function Home() {
     setCurrentLoss(null);
     setInitialLoss(null);
 
-    let shouldBuild = !tfModel.current;
-    if (tfModel.current) {
-      const modelWindow = tfModel.current.inputs[0].shape[1];
-      if (modelWindow !== windowLength) shouldBuild = true;
-    }
-
-    if (shouldBuild) {
-      tfModel.current = trainingMode === 'precise'
-        ? buildAdvancedModel(windowLength, 36, 11)
-        : buildFastModel(windowLength, 36, 11);
-    }
-
-    const { X, Y } = createDataset(data, windowLength);
-    if (X.length === 0 || Y.length === 0) {
-      setIsTraining(false);
-      return;
-    }
-
-    const config = TRAINING_CONFIG[trainingMode];
-    setTotalEpochs(config.epochs);
-    const xs = tf.tensor3d(X);
-    const ys = tf.tensor2d(Y);
-    const epochs = config.epochs;
+    let xs: tf.Tensor | null = null;
+    let ys: tf.Tensor | null = null;
 
     try {
+      // Ensure TF is ready
+      await tf.ready();
+
+      let shouldBuild = !tfModel.current;
+      if (tfModel.current) {
+        try {
+          const modelWindow = tfModel.current.inputs[0].shape[1];
+          if (modelWindow !== windowLength) shouldBuild = true;
+        } catch {
+          shouldBuild = true;
+        }
+      }
+
+      if (shouldBuild) {
+        // Dispose previous model if exists
+        if (tfModel.current) {
+          try { tfModel.current.dispose(); } catch { /* ignore */ }
+        }
+        tfModel.current = trainingMode === 'precise'
+          ? buildAdvancedModel(windowLength, 36, 11)
+          : buildFastModel(windowLength, 36, 11);
+      }
+
+      const dataset = createDataset(data, windowLength);
+      const { X, Y } = dataset;
+      
+      if (X.length === 0 || Y.length === 0) {
+        console.warn('Insufficient data for training window:', data.length, 'draws, window:', windowLength);
+        setIsTraining(false);
+        return;
+      }
+
+      // Update scaler and lastTwelve references from dataset
+      scalerRef.current = dataset.scaler;
+      lastTwelveRef.current = dataset.lastTwelve;
+
+      const config = TRAINING_CONFIG[trainingMode];
+      setTotalEpochs(config.epochs);
+      xs = tf.tensor3d(X);
+      ys = tf.tensor2d(Y);
+      const epochs = config.epochs;
+
       await tfModel.current!.fit(xs, ys, {
         epochs,
         batchSize: config.batchSize,
@@ -285,17 +385,22 @@ export default function Home() {
         }
       });
 
-      await saveModel(tfModel.current!);
+      // Save model after successful training
+      try {
+        await saveModel(tfModel.current!);
+      } catch (e) {
+        console.warn('Model save failed:', e);
+      }
+
+      // Trigger high-grade generation post training
+      await handleGenerateCombinations();
     } catch (e) {
       console.error("Training error:", e);
     } finally {
-      xs.dispose();
-      ys.dispose();
+      if (xs) xs.dispose();
+      if (ys) ys.dispose();
       setIsTraining(false);
     }
-
-    // Trigger high-grade generation post training
-    await handleGenerateCombinations();
   };
 
   // Main Generation Handler combining Neural Network & Statistical Engine
@@ -423,7 +528,7 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-black text-lg tracking-tight text-white">CRESCENDO</span>
-                <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent font-black tracking-wider text-lg">QUANTUM</span>
+                <span className="font-black tracking-wider text-lg text-amber-400">QUANTUM</span>
                 <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                   v2.5 Pro
                 </span>
@@ -673,7 +778,7 @@ export default function Home() {
                 disabled={isTraining || data.length === 0}
                 className="btn-cyan text-xs py-2 px-4 shadow-lg"
               >
-                <Brain className={`w-3.5 h-3.5 ${isTraining ? 'animate-bounce' : ''}`} />
+                <Brain className={`w-3.5 h-3.5 ${isTraining ? 'animate-pulse' : ''}`} />
                 <span>{isTraining ? `Entraînement en cours...` : `Lancer Entraînement Local`}</span>
               </button>
 
@@ -1140,7 +1245,99 @@ export default function Home() {
         )}
 
         {/* ============================================================== */}
-        {/* FEATURE 6: COMPACT SIMULATOR & GAIN CHECKER                    */}
+        {/* FEATURE 6: SATURDAY COUNTDOWN TIMER                            */}
+        {/* ============================================================== */}
+        <section className="luxury-panel p-5 sm:p-6 flex flex-col gap-4 border-emerald-500/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.06]">
+            <div className="space-y-0.5">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <Timer className="w-3.5 h-3.5" />
+                Compte à Rebours • Prochains Tirages SAMEDI
+              </span>
+              <h3 className="text-xl font-black text-white tracking-tight">
+                Horaires des Tirages Crescendo du Samedi
+              </h3>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-300 font-bold">
+                {currentTime.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+              <span className="text-white/20">•</span>
+              <Clock className="w-3 h-3 text-amber-400" />
+              <span className="text-amber-300 font-bold tabular-nums">
+                {currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {saturdayCountdowns.map((draw) => {
+              const hours = Math.floor(draw.diff / (1000 * 60 * 60));
+              const minutes = Math.floor((draw.diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((draw.diff % (1000 * 60)) / 1000);
+              const days = Math.floor(hours / 24);
+              const remainingHours = hours % 24;
+              
+              const isNext = !draw.passed && saturdayCountdowns.filter(d => !d.passed).indexOf(draw) === 0;
+              const isUrgent = !draw.passed && draw.diff < 3600000; // < 1h
+              
+              return (
+                <motion.div
+                  key={draw.hour}
+                  animate={isNext ? { scale: [1, 1.02, 1] } : {}}
+                  transition={isNext ? { repeat: Infinity, duration: 2, ease: 'easeInOut' } : {}}
+                  className={`relative p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-2 ${
+                    draw.passed
+                      ? 'bg-white/[0.02] border-white/[0.06] opacity-40'
+                      : isNext
+                        ? 'bg-emerald-500/15 border-emerald-400/50 shadow-lg shadow-emerald-500/10'
+                        : isUrgent
+                          ? 'bg-rose-500/10 border-rose-400/30'
+                          : 'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.05]'
+                  }`}
+                >
+                  {isNext && (
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950">
+                      Prochain
+                    </span>
+                  )}
+                  <div className={`text-sm font-black ${
+                    draw.passed ? 'text-slate-500 line-through' : isNext ? 'text-emerald-300' : 'text-white'
+                  }`}>
+                    {draw.label}
+                  </div>
+                  {draw.passed ? (
+                    <div className="text-[10px] text-slate-500 font-bold uppercase">Terminé</div>
+                  ) : (
+                    <div className="font-mono text-sm font-black tabular-nums">
+                      {days > 0 ? (
+                        <span className={isNext ? 'text-emerald-400' : isUrgent ? 'text-rose-400' : 'text-amber-300'}>
+                          {days}j {String(remainingHours).padStart(2, '0')}h{String(minutes).padStart(2, '0')}
+                        </span>
+                      ) : (
+                        <span className={isNext ? 'text-emerald-400' : isUrgent ? 'text-rose-400 animate-pulse' : 'text-amber-300'}>
+                          {String(remainingHours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Quick info bar */}
+          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+            <span>6 tirages chaque samedi de 14h à 19h • Résultats synchronisés automatiquement</span>
+            <span className="text-emerald-400 font-bold">
+              {saturdayCountdowns.filter(d => !d.passed).length} tirage(s) restant(s)
+            </span>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* FEATURE 7: COMPACT SIMULATOR & GAIN CHECKER                    */}
         {/* ============================================================== */}
         <section className="luxury-panel p-5 sm:p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
